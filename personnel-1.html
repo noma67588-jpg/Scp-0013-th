@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SITE-013-TH | PERSONNEL DATABASE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Sarabun:wght@300;400;600;700&display=swap');
+:root {
+  --bg:#060606; --panel:#0c0c0c; --border:#1c1c1c;
+  --red:#cc0000; --red-dim:#4a0000; --red-bright:#ff1a1a;
+  --amber:#ffaa00; --amber-dim:#3a2500;
+  --text:#d4d4d4; --muted:#555; --white:#f0f0f0;
+  --green:#00cc66; --green-dim:#003a1a;
+  --blue:#0088ff; --blue-dim:#001a3a;
+  --purple:#aa44ff; --purple-dim:#2a0044;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;font-weight:300;min-height:100vh;cursor:crosshair;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:9999;}
+.topbar{background:#030303;border-bottom:2px solid var(--red);padding:10px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;}
+.topbar-logo{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);letter-spacing:4px;}
+.topbar-r{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;}
+.blink{animation:blink 1.2s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.container{max-width:960px;margin:0 auto;padding:24px 16px 60px;}
+
+/* UNITS SECTION */
+.section-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);letter-spacing:4px;margin-bottom:12px;padding-left:10px;border-left:2px solid var(--amber);}
+.units-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:24px;}
+.unit-card{border:1px solid var(--border);background:var(--panel);padding:14px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.unit-card:hover{border-color:var(--amber);background:#0e0900;}
+.unit-card.active{border-color:var(--amber);background:#0e0900;box-shadow:0 0 12px rgba(255,170,0,0.08);}
+.unit-card.red-unit{border-color:var(--red-dim);}
+.unit-card.red-unit:hover,.unit-card.red-unit.active{border-color:var(--red);background:#0a0000;}
+.unit-tag{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;padding:2px 8px;display:inline-block;margin-bottom:8px;}
+.tag-n{background:#001a3a;color:var(--blue);}
+.tag-scp{background:#003a1a;color:var(--green);}
+.tag-gb{background:#2a0044;color:var(--purple);}
+.tag-killer{background:var(--red-dim);color:var(--red-bright);}
+.tag-protect{background:#1a1200;color:var(--amber);}
+.unit-name{font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px;}
+.unit-desc{font-size:12px;color:#888;line-height:1.7;}
+.unit-detail{display:none;border:1px solid var(--border);border-top:none;background:#080808;padding:14px;margin-top:-3px;margin-bottom:12px;font-size:12px;color:#999;line-height:1.8;}
+.unit-detail.show{display:block;animation:fd 0.3s ease;}
+@keyframes fd{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.tier-list{margin-top:8px;}
+.tier-item{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #111;font-size:11px;}
+.tier-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);min-width:60px;letter-spacing:1px;}
+.tier-label.red{color:var(--red);}
+.warn-box{border:1px solid var(--red);background:#050000;padding:8px 12px;margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red);letter-spacing:1px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{border-color:var(--red)}50%{border-color:var(--red-dim)}}
+
+/* DEPT FILTER */
+.dept-bar{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.dept-btn{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;padding:6px 12px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.dept-btn:hover{color:var(--text);border-color:#333;}
+.dept-btn.active{color:var(--amber);border-color:var(--amber-dim);background:#0e0900;}
+
+/* SEARCH */
+.search-bar{width:100%;background:#080808;border:1px solid var(--border);padding:10px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text);margin-bottom:12px;outline:none;transition:border 0.2s;}
+.search-bar:focus{border-color:var(--amber);}
+.search-bar::placeholder{color:var(--muted);}
+
+/* PERSONNEL GRID */
+.personnel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;}
+@media(max-width:600px){.personnel-grid{grid-template-columns:1fr 1fr;}.units-grid{grid-template-columns:1fr;}}
+.person-card{border:1px solid var(--border);background:var(--panel);padding:12px;cursor:pointer;transition:all 0.2s;position:relative;}
+.person-card:hover{border-color:var(--amber);background:#0a0800;}
+.person-card.missing{border-color:var(--red-dim);opacity:0.7;}
+.person-card.missing:hover{border-color:var(--red);opacity:1;}
+.person-card.controlled{border-color:#2a0000;animation:pulse-slow 3s infinite;}
+@keyframes pulse-slow{0%,100%{border-color:#2a0000}50%{border-color:var(--red-dim)}}
+.person-dept{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;}
+.person-name{font-size:13px;font-weight:600;color:var(--white);line-height:1.3;margin-bottom:3px;}
+.person-role{font-size:11px;color:#888;margin-bottom:6px;}
+.person-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.ptag{font-family:'Share Tech Mono',monospace;font-size:7px;padding:2px 5px;letter-spacing:1px;}
+.ptag-g{background:var(--green-dim);color:var(--green);}
+.ptag-r{background:var(--red-dim);color:var(--red-bright);}
+.ptag-a{background:var(--amber-dim);color:var(--amber);}
+.ptag-b{background:var(--blue-dim);color:var(--blue);}
+.ptag-p{background:var(--purple-dim);color:var(--purple);}
+.ptag-gray{background:#111;color:#666;}
+.hidden{display:none!important;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:#080808;border:1px solid var(--border);max-width:640px;width:100%;margin:auto;position:relative;animation:modalIn 0.3s ease;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+.modal-header{border-bottom:1px solid var(--border);padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;background:#050505;}
+.modal-close{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--muted);cursor:pointer;background:none;border:none;transition:color 0.2s;}
+.modal-close:hover{color:var(--red-bright);}
+.modal-body{padding:18px;}
+.modal-id{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:4px;}
+.modal-name{font-family:'Sarabun',sans-serif;font-size:20px;font-weight:700;color:var(--white);line-height:1.2;}
+.modal-role{font-size:13px;color:var(--amber);margin-top:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:14px 0;}
+.info-cell{background:#0a0a0a;border:1px solid #111;padding:8px 10px;}
+.info-label{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--amber);letter-spacing:2px;margin-bottom:2px;}
+.info-label.red{color:var(--red);}
+.info-val{font-size:12px;color:var(--white);}
+.section-head{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--amber);letter-spacing:3px;margin:14px 0 6px;padding-left:8px;border-left:2px solid var(--amber);}
+.section-head.red{color:var(--red);border-color:var(--red);}
+.modal-text{font-size:13px;color:#aaa;line-height:1.9;}
+.hot-bar{height:4px;background:#111;margin-top:4px;border-radius:0;}
+.hot-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--red-bright));transition:width 0.5s;}
+.modal-warn{border:1px solid var(--red-dim);background:#060000;padding:8px 12px;margin:12px 0;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red-dim);letter-spacing:1px;}
+.redacted{background:#111;color:#111;padding:0 3px;font-family:'Share Tech Mono',monospace;font-size:11px;user-select:none;}
+.redacted:hover{background:#1a0000;color:var(--red-dim);}
+.stats-row{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;}
+.stat{text-align:center;}
+.stat-num{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--white);}
+.stat-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
+footer{border-top:1px solid var(--border);padding:14px 16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:30px;}
+.adv-filter{border:1px solid var(--border);background:#080808;padding:14px;margin-bottom:10px;}
+.adv-toggle{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+.adv-toggle:hover{color:var(--amber);}
+.adv-body{display:none;margin-top:12px;border-top:1px solid #111;padding-top:12px;}
+.adv-body.open{display:block;}
+.adv-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.adv-group{display:flex;flex-direction:column;gap:4px;}
+.adv-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--amber);letter-spacing:2px;}
+.adv-range{display:flex;gap:5px;align-items:center;}
+.adv-input{background:#0a0a0a;border:1px solid var(--border);padding:5px 7px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);width:58px;outline:none;}
+.adv-input:focus{border-color:var(--amber);}
+.adv-sep{font-size:10px;color:var(--muted);}
+.adv-select{background:#0a0a0a;border:1px solid var(--border);padding:5px 7px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);outline:none;width:100%;}
+.adv-select:focus{border-color:var(--amber);}
+.adv-btn-row{display:flex;gap:6px;margin-top:10px;}
+.adv-apply{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:6px 14px;background:var(--amber-dim);border:1px solid var(--amber);color:var(--amber);cursor:pointer;transition:all 0.2s;}
+.adv-apply:hover{background:var(--amber);color:#000;}
+.adv-reset{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:6px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.adv-reset:hover{border-color:var(--red);color:var(--red);}
+.result-count{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;}
+.unit-badge{font-family:'Share Tech Mono',monospace;font-size:7px;padding:1px 5px;letter-spacing:1px;margin-top:2px;display:inline-block;}
+.ub-n{background:#001a3a;color:var(--blue);}
+.ub-scp{background:#003a1a;color:var(--green);}
+.ub-gb{background:#2a0044;color:var(--purple);}
+.ub-killer{background:var(--red-dim);color:var(--red-bright);}
+.ub-protect{background:#1a1200;color:var(--amber);}
+</style>
+<style>
+/* SECRET PANEL */
+.secret-panel{position:fixed;top:42px;left:0;right:0;z-index:500;display:none;justify-content:center;padding:0 16px;}
+.secret-panel.open{display:flex;}
+.secret-inner{background:#050000;border:1px solid var(--red-dim);border-top:none;width:100%;max-width:400px;box-shadow:0 8px 24px rgba(0,0,0,0.8);}
+.secret-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #1a0000;}
+.secret-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red-dim);letter-spacing:3px;}
+.secret-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:'Share Tech Mono',monospace;transition:color 0.2s;}
+.secret-close:hover{color:var(--red-bright);}
+.secret-body{padding:14px;}
+.secret-prompt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-align:center;margin-bottom:10px;}
+.numpad-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:10px;}
+.nm-btn{font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 4px;background:#0a0a0a;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all 0.15s;text-align:center;}
+.nm-btn:hover{background:#1a0000;border-color:var(--red-dim);color:var(--red-bright);}
+.nm-btn:active{transform:scale(0.93);}
+.secret-display{font-family:'Share Tech Mono',monospace;font-size:16px;color:var(--white);text-align:center;letter-spacing:8px;padding:6px;border-bottom:1px solid var(--border);margin-bottom:6px;min-height:34px;}
+.secret-msg{font-family:'Share Tech Mono',monospace;font-size:9px;text-align:center;letter-spacing:2px;min-height:14px;margin-bottom:4px;}
+.secret-attempts{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--red-dim);text-align:center;letter-spacing:1px;}
+.secret-revert{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:6px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s;width:100%;margin-top:4px;}
+.secret-revert:hover{border-color:var(--red);color:var(--red);}
+/* TOPBAR unlock indicator */
+.topbar-unlocked{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);letter-spacing:2px;animation:blink 2s infinite;}
+
+/* AVATAR */
+.avatar{width:56px;height:56px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:2px solid var(--border);}
+.card-top{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;}
+.card-info{flex:1;}
+.modal-avatar{width:80px;height:80px;font-size:32px;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);flex-shrink:0;margin-right:14px;float:left;}
+.modal-header-inner{display:flex;align-items:flex-start;}
+
+/* CLASSIFIED UNLOCK */
+.locked-field{background:#0a0000;border:1px solid var(--red-dim);padding:3px 8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red-dim);display:inline-block;cursor:pointer;transition:all 0.2s;}
+.locked-field.unlocked{background:transparent;border-color:transparent;color:var(--text);cursor:default;}
+.class-badge{font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 8px;letter-spacing:2px;display:inline-block;margin:2px 0;}
+.class-special{background:#1a0040;border:1px solid #6600cc;color:#cc88ff;animation:pulse-purple 2s infinite;}
+@keyframes pulse-purple{0%,100%{border-color:#6600cc}50%{border-color:#aa44ff;box-shadow:0 0 8px rgba(170,68,255,0.3)}}
+.class-normal{background:#001a3a;border:1px solid var(--blue);color:var(--blue);}
+.class-danger{background:var(--red-dim);border:1px solid var(--red);color:var(--red-bright);}
+.power-bar{height:3px;background:#111;margin-top:3px;}
+.power-fill{height:100%;transition:width 0.8s;}
+</style>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo" onclick="secretClick()" style="cursor:default;user-select:none">⬡ SITE-013-TH | PERSONNEL DATABASE</div>
+  <div class="topbar-r" id="topbar-status"><span class="blink">●</span> 47 PERSONNEL ON RECORD</div>
+</div>
+
+<!-- SECRET PANEL -->
+<div class="secret-panel" id="secret-panel">
+  <div class="secret-inner">
+    <div class="secret-header">
+      <div class="secret-title">// CLASSIFIED ACCESS</div>
+      <button class="secret-close" onclick="closeSecret()">✕</button>
+    </div>
+    <div class="secret-body" id="secret-body">
+      <div class="secret-prompt">กรอกรหัสผ่าน</div>
+      <div class="numpad-mini">
+        <div class="nm-btn" onclick="sPress(1)">1</div>
+        <div class="nm-btn" onclick="sPress(2)">2</div>
+        <div class="nm-btn" onclick="sPress(3)">3</div>
+        <div class="nm-btn" onclick="sPress(4)">4</div>
+        <div class="nm-btn" onclick="sPress(5)">5</div>
+        <div class="nm-btn" onclick="sPress(6)">6</div>
+        <div class="nm-btn" onclick="sPress(7)">7</div>
+        <div class="nm-btn" onclick="sPress(8)">8</div>
+        <div class="nm-btn" onclick="sPress(9)">9</div>
+        <div class="nm-btn" onclick="sPress(10)" style="grid-column:span 2;font-size:9px">10</div>
+      </div>
+      <div class="secret-display" id="secret-display">—</div>
+      <div class="secret-msg" id="secret-msg"></div>
+      <div class="secret-attempts" id="secret-attempts"></div>
+    </div>
+    <div id="secret-unlocked-bar" style="display:none">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);letter-spacing:2px;text-align:center;margin-bottom:8px">✓ CLASSIFIED ACCESS ACTIVE</div>
+      <button class="secret-revert" onclick="revokeAccess()">[ กลับไปดูข้อมูลปกติ ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- UNITS -->
+<div class="section-title">// หน่วยงานภายใน SITE-013-TH</div>
+<div class="units-grid">
+  <div class="unit-card" onclick="toggleUnit('n-th')">
+    <span class="unit-tag tag-n">N-TH</span>
+    <div class="unit-name">N-TH Unit</div>
+    <div class="unit-desc">หน่วยจัดการ SCP โดยตรง — บุคลากรมีความสามารถพิเศษต่อกรกับ SCP ได้</div>
+  </div>
+  <div id="detail-n-th" class="unit-detail">
+    ก่อตั้งโดยองค์กร SCP ฝั่งอเมริกา รวบรวมบุคลากรที่มีร่างกายหรือพลังวิเศษที่สามารถต่อกรกับ SCP ระดับอันตรายปานกลางได้
+    <div class="tier-list">
+      <div class="tier-item"><span class="tier-label">TIER 1</span>ต้านแรงได้แต่แพ้</div>
+      <div class="tier-item"><span class="tier-label">TIER 2</span>ยื้อเวลาได้หรือเสมอ</div>
+      <div class="tier-item"><span class="tier-label">TIER 3</span>ชนะได้</div>
+      <div class="tier-item"><span class="tier-label red">TIER 4</span>ความสามารถพอๆ กับ SCP ระดับอันตรายสูงสุด</div>
+    </div>
+    <div class="warn-box">⚠ TIER 4 — ไม่สามารถเปิดเผยชื่อได้ในปัจจุบัน</div>
+  </div>
+
+  <div class="unit-card" onclick="toggleUnit('scp-th')">
+    <span class="unit-tag tag-scp">SCP-TH</span>
+    <div class="unit-name">SCP TH</div>
+    <div class="unit-desc">องค์กรที่ทำงานให้รัฐบาลไทยโดยตรง เน้นความปลอดภัยของประชาชน</div>
+  </div>
+  <div id="detail-scp-th" class="unit-detail">
+    ทำงานให้กับรัฐบาลไทยโดยตรง เน้นความปลอดภัยของประชาชนเป็นหลัก ปัจจุบันมีบุคลากรใน SITE-013-TH เพียงคนเดียวที่สังกัดหน่วยนี้
+  </div>
+
+  <div class="unit-card" onclick="toggleUnit('gb-scp')">
+    <span class="unit-tag tag-gb">GB SCP-TH</span>
+    <div class="unit-name">GB SCP-TH</div>
+    <div class="unit-desc">ก่อตั้งโดยรัฐบาลชุดใหม่ เน้นนำความสามารถ SCP มาใช้ให้เป็นประโยชน์</div>
+  </div>
+  <div id="detail-gb-scp" class="unit-detail">
+    ก่อตั้งโดยรัฐบาลชุดใหม่ของไทยจากพรรค <span class="redacted">████████</span> มักมีปัญหากับบุคลากรที่สังกัด SCP-TH เนื่องจากแนวคิดที่ขัดแย้งกันในเรื่องการนำ SCP มาใช้ประโยชน์
+  </div>
+
+  <div class="unit-card red-unit" onclick="toggleUnit('killer')">
+    <span class="unit-tag tag-killer">THE KILLER SCP</span>
+    <div class="unit-name">The Killer SCP</div>
+    <div class="unit-desc">หน่วยลอบสังหาร — ป้องกันการรั่วไหลของข้อมูลองค์กร</div>
+  </div>
+  <div id="detail-killer" class="unit-detail">
+    รวมบุคลากรที่มีความสามารถในการลอบสังหาร เพื่อกำจัดผู้ที่อาจเปิดเผยข้อมูลองค์กรสู่สาธารณชน
+    <div class="warn-box">⚠ อดีตหัวหน้าหน่วยนี้คือ Dr. Purple — ก่อนที่เขาจะย้ายมาฝ่ายวิจัย</div>
+  </div>
+
+  <div class="unit-card" onclick="toggleUnit('protect')">
+    <span class="unit-tag tag-protect">PROTECT</span>
+    <div class="unit-name">Protect</div>
+    <div class="unit-desc">หน่วยรักษา — รวมผู้มีความสามารถในการรักษาทุกรูปแบบ</div>
+  </div>
+  <div id="detail-protect" class="unit-detail">
+    รวมเจ้าหน้าที่ที่มีความสามารถในการรักษา ทั้งความรู้ ประสบการณ์ และพลังพิเศษ
+    <div class="tier-list">
+      <div class="tier-item"><span class="tier-label">TIER 1</span>ความรู้และประสบการณ์การรักษาทั่วไป</div>
+      <div class="tier-item"><span class="tier-label">TIER 2</span>ความสามารถรักษาเกินมนุษย์ปกติ</div>
+      <div class="tier-item"><span class="tier-label">TIER 3</span>รักษาได้แม้กระทั่งบาดแผลที่ไม่ควรรักษาได้</div>
+      <div class="tier-item"><span class="tier-label red">TIER 4</span><span class="redacted">คืนชีพจากความตายได้</span></div>
+    </div>
+    <div class="warn-box">⚠ บุคลากร TIER 4 ทั้งหมดไม่ได้รับแจ้งเกี่ยวกับ TIER นี้ — พวกเขาถูกจัดให้อยู่ใน TIER 1, 2 หรือ 3</div>
+  </div>
+</div>
+
+<!-- FILTER + SEARCH -->
+<div class="section-title">// บุคลากรทั้งหมด — 47 คน</div>
+<input class="search-bar" type="text" id="search-input" placeholder="// ค้นหาชื่อหรือตำแหน่ง..." oninput="filterPersonnel(this.value)">
+
+<!-- DEPT FILTER -->
+<div class="dept-bar">
+  <button class="dept-btn active" onclick="filterDept('ALL',this)">ทั้งหมด</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-R',this)">DEPT-R วิจัย</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-S',this)">DEPT-S ความปลอดภัย</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-M',this)">DEPT-M การแพทย์</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-E',this)">DEPT-E วิศวกรรม</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-I',this)">DEPT-I ข้อมูล</button>
+  <button class="dept-btn" onclick="filterDept('DEPT-A',this)">DEPT-A บริหาร</button>
+</div>
+
+<!-- UNIT FILTER -->
+<div class="dept-bar" style="margin-top:-8px">
+  <button class="dept-btn active" onclick="filterUnit('ALL',this)" id="unit-all">หน่วย: ทั้งหมด</button>
+  <button class="dept-btn" onclick="filterUnit('N-TH',this)">N-TH</button>
+  <button class="dept-btn" onclick="filterUnit('SCP-TH',this)">SCP-TH</button>
+  <button class="dept-btn" onclick="filterUnit('GB SCP-TH',this)">GB SCP-TH</button>
+  <button class="dept-btn" onclick="filterUnit('THE KILLER SCP',this)" style="color:var(--red-dim)">KILLER SCP</button>
+  <button class="dept-btn" onclick="filterUnit('PROTECT',this)">PROTECT</button>
+</div>
+
+<!-- ADVANCED FILTER -->
+<div class="adv-filter">
+  <div class="adv-toggle" onclick="toggleAdv()">
+    <span>// ตัวกรองขั้นสูง — ADVANCED FILTER</span>
+    <span id="adv-arrow">▼</span>
+  </div>
+  <div class="adv-body" id="adv-body">
+    <div class="adv-row">
+      <div class="adv-group">
+        <div class="adv-label">// เพศ</div>
+        <select class="adv-select" id="f-gender">
+          <option value="">ทั้งหมด</option>
+          <option value="ชาย">ชาย</option>
+          <option value="หญิง">หญิง</option>
+        </select>
+      </div>
+      <div class="adv-group">
+        <div class="adv-label">// ระดับการเข้าถึง</div>
+        <select class="adv-select" id="f-access">
+          <option value="">ทั้งหมด</option>
+          <option value="Level 1">Level 1</option>
+          <option value="Level 2">Level 2</option>
+          <option value="Level 3">Level 3</option>
+          <option value="Level 4">Level 4</option>
+          <option value="Level 5">Level 5</option>
+        </select>
+      </div>
+    </div>
+    <div class="adv-row">
+      <div class="adv-group">
+        <div class="adv-label">// ส่วนสูง (ซม.)</div>
+        <div class="adv-range">
+          <input class="adv-input" id="f-hmin" type="number" placeholder="ต่ำสุด">
+          <span class="adv-sep">—</span>
+          <input class="adv-input" id="f-hmax" type="number" placeholder="สูงสุด">
+        </div>
+      </div>
+      <div class="adv-group">
+        <div class="adv-label">// น้ำหนัก (กก.)</div>
+        <div class="adv-range">
+          <input class="adv-input" id="f-wmin" type="number" placeholder="ต่ำสุด">
+          <span class="adv-sep">—</span>
+          <input class="adv-input" id="f-wmax" type="number" placeholder="สูงสุด">
+        </div>
+      </div>
+    </div>
+    <div class="adv-row">
+      <div class="adv-group">
+        <div class="adv-label">// อายุ (ปี)</div>
+        <div class="adv-range">
+          <input class="adv-input" id="f-amin" type="number" placeholder="ต่ำสุด">
+          <span class="adv-sep">—</span>
+          <input class="adv-input" id="f-amax" type="number" placeholder="สูงสุด">
+        </div>
+      </div>
+      <div class="adv-group">
+        <div class="adv-label">// ระดับความฮอต</div>
+        <div class="adv-range">
+          <input class="adv-input" id="f-hotmin" type="number" placeholder="ต่ำสุด">
+          <span class="adv-sep">—</span>
+          <input class="adv-input" id="f-hotmax" type="number" placeholder="สูงสุด">
+        </div>
+      </div>
+    </div>
+    <div class="adv-btn-row">
+      <button class="adv-apply" onclick="applyAdv()">[ ค้นหา ]</button>
+      <button class="adv-reset" onclick="resetAdv()">[ รีเซ็ต ]</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-count" id="result-count"></div>
+<div class="personnel-grid" id="personnel-grid"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-id" id="m-id"></div>
+        <div class="modal-name" id="m-name"></div>
+        <div class="modal-role" id="m-role"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+  </div>
+</div>
+
+<footer>SITE-013-TH | PERSONNEL DATABASE | UNAUTHORIZED ACCESS PROHIBITED | <span class="redacted">CLEARANCE REQUIRED</span></footer>
+
+<script>
+const STAFF = [
+  // DEPT-R
+  {id:'*3*4*2**7*550',name:'Dr. Purple (ด็อกเตอร์ เพอร์เพิล)',nick:'Dr. Purple',dept:'DEPT-R',role:'นักวิจัยหลัก / ผู้ควบคุมใหญ่ SCP-0013-TH',unit:'N-TH',access:'Level 4',status:'มนุษย์',age:25,gender:'ชาย',nationality:'ไทย',heightNum:178,weightNum:69,height:'178 ซม.',weight:'69 กก.',hot:89,
+   avatar:'DR',avatarBg:'#1a0030',avatarBorder:'#aa44ff',
+   scpClass:'SPECIAL — ระดับอันตรายสูงสุด / สามารถทำลายได้',scpClassType:'special',
+   powerLevel:98,powerLabel:'N-TH TIER 3 → ปรับตัวพิเศษ',
+   currentState:'กักขัง SCP-0013-TH ไว้ในจิตใต้สำนึก — ไม่แน่ใจว่าใครควบคุมใคร',
+   lockedLike:'แมว สุนัข นกฮูก จิ้งจอก | นอน | เล่นเกม | มวยไทย',
+   lockedAbility:'การปรับตัว (รับมาจาก SCP-0013-TH) — สามารถวิวัฒนาการร่างกายและความสามารถเพื่อรับมือกับภัยคุกคามได้ในเวลาจำกัด',
+   appearance:'หน้าตามีความเป็นยุโรปบ้าง ผมและตาสีม่วงตั้งแต่เกิด หน้าตาดูเหนื่อยตลอด มีรอยใต้ตาเป็นเอกลักษณ์ แต่งชุดกาวเป็นหลักเพราะ "มันแต่งตัวง่ายดี ไม่ต้องคิดเยอะ"',
+   history:'อดีตเคยเป็นหัวหน้าหน่วย The Killer SCP และหน่วยจู่โจมให้กับองค์กรสาขาอเมริกา ก่อนจะย้ายมาฝ่ายวิจัยที่สาขาไทยด้วยเหตุผลส่วนตัวที่ไม่เปิดเผย ถือเป็นบุคลากรใหม่แต่ได้รับมอบหมายให้ดูแล SCP-0013-TH โดยตรง เพราะเป็นคนเดียวที่ตามแผนการของมันทัน',
+   achievement:'เคยร่วมปฏิบัติการจับกุม SCP-682 และรอดกลับมาได้ | ได้ฉายา "นักวิทยาศาสตร์ที่แข็งแรงที่สุด" | บุคคลเดียวที่เอาชนะแผนการของ SCP-0013-TH ได้',
+   personality:'ไม่ชอบทำงาน ถ้ามีงานจะรีบทำให้เสร็จเพื่อกลับไปนอนหรือเล่นเกม แต่เมื่อต้องทำจริงจังจะไม่ลังเล',
+   strong:'ผมและตาสีม่วงตั้งแต่เกิด | ความฉลาดระดับที่คนอื่นไม่เข้าใจกระบวนการคิด | ฝึกมวยไทยสม่ำเสมอ',
+   weak:'กลัวอาหารรสเผ็ดถึงขั้นกลัวจริงๆ',
+   like:'แมว สุนัข นกฮูก จิ้งจอก | นอน | เล่นเกม | มวยไทย',
+   dislike:'อาหารรสเผ็ด',
+   quote:'"อยากนอนแล้ว"',
+   tags:['⭐ หัวหน้า','N-TH','Level 4'],
+   alert:null},
+
+  {id:'157**8***0**1',name:'Marcus (มาร์คัส) Thanakorn',nick:'นักวิจัยอาวุโส',dept:'DEPT-R',role:'นักวิจัยอาวุโส',unit:'SCP-TH',access:'Level 4',status:'มนุษย์',age:56,gender:'ชาย',nationality:'อังกฤษ',heightNum:170,weightNum:63,height:'170 ซม.',weight:'63 กก.',hot:45,
+   avatar:'MR',avatarBg:'#0a1a2a',avatarBorder:'#0088ff',
+   scpClass:'บุคลากร — ไม่จัดเป็น SCP',scpClassType:'normal',powerLevel:35,powerLabel:'ความรู้และประสบการณ์',currentState:'ทำงานปกติ — รู้มากกว่าที่แสดงออก',lockedLike:'ปลาทูน่า',lockedAbility:'ไม่มีความสามารถพิเศษ — แต่ความรู้ 30 ปีทดแทนได้',
+   appearance:'หน้าตาดูแก่ ผมขาวทั้งหมด ตาสีฟ้า ชอบบอกว่า "สมัยก่อนผมสีทอง" แต่งชุดกาว',
+   history:'นักวิจัยที่ทำงานในองค์กรมานานกว่า 30 ปี เป็นผู้ฝึกสอน Dr. Purple ในการเป็นนักวิจัย เขาเห็นนักวิจัยรุ่นแล้วรุ่นเล่าผ่านมาและไป บางคนไม่เคยกลับมา แต่ Marcus ยังอยู่ เขารู้ความจริงบางอย่างเกี่ยวกับองค์กรที่เขาเลือกจะเงียบ เพราะรู้ดีว่าคนที่พูดมากเกินไปมักหายไป',
+   achievement:'คิดค้นวิธีติดตาม SCP-<span class="redacted">███</span> | เป็นนักวิจัยที่รอดมาได้นานที่สุดในสาขาไทย',
+   personality:'น่าไว้ใจและเชื่อถือได้ แต่มีความลับที่ไม่เคยบอกใคร รู้มากกว่าที่แสดงออกเสมอ',
+   strong:'ความรู้เรื่องการสร้างอาวุธต่อต้าน SCP | ประสบการณ์ 30 ปี',
+   weak:'แรงกายน้อยลงตามอายุ',
+   like:'ปลาทูน่า',
+   dislike:'แมงกระพรุน',
+   quote:'ไม่มี',
+   tags:['SCP-TH','Level 4','30+ ปี'],
+   alert:null},
+
+  {id:'**2**9**4**3',name:'Leo (ลีโอ) Pichit',nick:'นักวิจัยฟิสิกส์',dept:'DEPT-R',role:'นักวิจัย — ฟิสิกส์',unit:'N-TH',access:'Level 3',status:'มนุษย์',age:31,gender:'ชาย',nationality:'ไทย',heightNum:175,weightNum:65,height:'175 ซม.',weight:'65 กก.',hot:72,
+   avatar:'LE',avatarBg:'#001a0a',avatarBorder:'#00cc66',
+   scpClass:'บุคลากร N-TH',scpClassType:'normal',powerLevel:60,powerLabel:'N-TH TIER 1 — ฟิสิกส์',
+   currentState:'ทำวิจัยปกติ — กังวลเรื่อง SCP-0013-TH',lockedLike:'แก้วกาแฟดำ | สมการ',lockedAbility:'ความเข้าใจฟิสิกส์เชิงลึก',
+   appearance:'ผมดำ ตาสีน้ำตาล สวมแว่นหนา แต่งชุดกาวเหมือนคนอื่น แต่มักมีกระดาษโน้ตเต็มกระเป๋า',
+   history:'อัจฉริยะที่สอบติดคณะฟิสิกส์จุฬาฯ ตอนอายุ 15 และจบปริญญาเอกตอนอายุ 22 องค์กรดึงตัวเขามาหลังจากที่เขาตีพิมพ์งานวิจัยเรื่องการบิดพื้นที่-เวลาในสภาวะสูญญากาศ ซึ่งองค์กรรู้ดีว่ามันใกล้เคียงกับพฤติกรรมของ SCP บางตัวมากเกินไป เขาถูกเสนอทางเลือกสองทาง — เข้าร่วมหรือลืมทุกอย่างที่เคยค้นพบ',
+   achievement:'พัฒนาสมการคำนวณแรงดันห้องกักกัน SCP-0013-TH | ค้นพบว่า SCP-0013-TH ปล่อยคลื่นแม่เหล็กที่ยังอธิบายไม่ได้',
+   personality:'พูดน้อย ชอบนั่งคิดคนเดียว ดูเหมือนไม่สนใจอะไร แต่ความจริงสังเกตทุกอย่างรอบตัวตลอดเวลา',
+   strong:'ความเข้าใจฟิสิกส์ระดับสูง | คิดเร็วในสถานการณ์วิกฤต',
+   weak:'ไม่เก่งเรื่องคนและอารมณ์',
+   like:'สมการที่สวยงาม | กาแฟดำ',
+   dislike:'คำถามที่ไม่มีคำตอบ (แต่เขาเองก็มีหลายข้อ)',
+   quote:'"ทุกอย่างมีสมการอธิบายได้ — ยกเว้น SCP-0013-TH"',
+   tags:['N-TH','Level 3'],
+   alert:null},
+
+  {id:'**8**1**6**2',name:'Noah (โนอาห์) Sirichai',nick:'นักวิจัยผู้ช่วย',dept:'DEPT-R',role:'นักวิจัยผู้ช่วย',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:24,gender:'ชาย',nationality:'ไทย-อเมริกัน',height:'172 ซม.',weight:'67 กก.',hot:78,
+   avatar:'NO',avatarBg:'#0e0020',avatarBorder:'#aa44ff',
+   scpClass:'บุคลากร GB SCP-TH',scpClassType:'normal',powerLevel:30,powerLabel:'สายข้อมูล — ไม่มีพลังรบ',
+   currentState:'สอดส่องในนาม GB — ลังเลใจ',lockedLike:'ฟุตบอล | อาหารไทย',lockedAbility:'วิเคราะห์พฤติกรรมมนุษย์เก่ง',
+   appearance:'ผมสีน้ำตาลอ่อน ตาสีเขียว หน้าตาดูเด็ก แต่งตัวดีกว่าคนอื่นในแล็บ มักถูกแซวว่าแต่งตัวเหมือนจะไปทำงานออฟฟิศ',
+   history:'เข้าองค์กรในฐานะตัวแทนของ GB SCP-TH ซึ่งส่งเขามาเพื่อ "ร่วมวิจัย" แต่ทุกคนรู้ดีว่าเขามาเพื่อสอดส่อง เขาเองก็รู้ว่าทุกคนรู้ แต่ยังคงทำหน้าที่ต่อไป ความขัดแย้งระหว่าง GB SCP-TH และ SCP-TH ทำให้เขาอยู่ในสถานะที่อึดอัด เพราะลึกๆ เขาเห็นด้วยกับแนวทางของ SCP-TH มากกว่า',
+   achievement:'รายงานข้อมูลกลับ GB SCP-TH ได้อย่างต่อเนื่องโดยไม่ถูกจับได้ | เป็นคนแรกที่สังเกตว่า SCP-0013-TH มีพฤติกรรมต่างกันในแต่ละช่วงเวลาของวัน',
+   personality:'เป็นมิตร พูดเก่ง ดูเหมือนไม่มีพิษมีภัย แต่ทุกคำพูดมีจุดประสงค์',
+   strong:'เก็บข้อมูลและวิเคราะห์พฤติกรรม | สร้างความไว้วางใจได้เร็ว',
+   weak:'ยืนอยู่ระหว่างสองฝ่ายที่ขัดแย้งกัน',
+   like:'อาหารไทย | ฟุตบอล',
+   dislike:'การเลือกข้าง',
+   quote:'"ผมแค่ทำงานตามที่ได้รับมอบหมาย"',
+   tags:['GB SCP-TH','Level 2'],
+   alert:null},
+
+  {id:'**5**3**9**7',name:'Ethan (อีธาน) Krongkaew',nick:'นักวิจัยผู้ช่วย',dept:'DEPT-R',role:'นักวิจัยผู้ช่วย',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:22,gender:'ชาย',nationality:'ไทย',height:'168 ซม.',weight:'60 กก.',hot:65,
+   avatar:'ET',avatarBg:'#001030',avatarBorder:'#0088ff',
+   scpClass:'บุคลากร N-TH — ศักยภาพซ่อนอยู่',scpClassType:'normal',powerLevel:45,powerLabel:'N-TH TIER 1 → ยังไม่ปลดล็อค',
+   currentState:'ทำงานปกติ ไม่รู้ศักยภาพตัวเอง',lockedLike:'มังงะ | ราเมน',lockedAbility:'ศักยภาพที่ยังไม่ถูกค้นพบ — อาจเป็น TIER 4',
+   appearance:'ผมดำตัดสั้น ตาสีน้ำตาลเข้ม ดูอ่อนเยาว์มาก บางคนคิดว่าเขายังอยู่มัธยม แต่งชุดกาว',
+   history:'นักวิจัยใหม่ที่สุดในแผนก เพิ่งจบปริญญาตรีชีววิทยาและได้รับการคัดเลือกเข้าองค์กรจากโปรแกรมรับสมัครนักวิทยาศาสตร์รุ่นใหม่ เขายังไม่รู้ว่าตัวเองถูกเลือกมาเพราะผลการทดสอบ IQ ที่สูงผิดปกติ และมีความสามารถพิเศษที่องค์กรสนใจมาก — แต่ยังไม่บอกเขา',
+   achievement:'ยังไม่มีผลงานชัดเจน แต่มีรายงานภายในว่าเขาอาจเป็น TIER 4 ของ N-TH',
+   personality:'กระตือรือร้น อยากรู้อยากเห็นมากเกินไป บางครั้งถามคำถามที่คนอื่นไม่กล้าถาม',
+   strong:'เรียนรู้เร็วมาก | ความสามารถที่ยังไม่ถูกปลดล็อค',
+   weak:'ประสบการณ์น้อย ไม่รู้ว่าตัวเองอยู่ในอันตราย',
+   like:'มังงะ | ราเมน | เกมมือถือ',
+   dislike:'การถูกมองว่าเด็กเกินไป',
+   quote:'"แต่ว่า... ทำไมเราไม่ลองแบบนี้ดูล่ะ?"',
+   tags:['N-TH','Level 2','ใหม่'],
+   alert:null},
+
+  {id:'**4**7**1**8',name:'Vera (เวร่า) Malai',nick:'Dr. เทา',dept:'DEPT-R',role:'นักวิจัย — เคมี',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:38,gender:'หญิง',nationality:'รัสเซีย-ไทย',heightNum:165,weightNum:55,height:'165 ซม.',weight:'55 กก.',hot:76,
+   avatar:'VE',avatarBg:'#0a0a0a',avatarBorder:'#888',
+   scpClass:'นักเคมีระดับสูง',scpClassType:'normal',powerLevel:55,powerLabel:'ความรู้เคมีต้องห้าม',
+   currentState:'ทำงานปกติ — เฝ้าสังเกตทุกคน',lockedLike:'ชา | ความเงียบ',lockedAbility:'สังเคราะห์สารที่อธิบายไม่ได้ทางวิทยาศาสตร์',
+   appearance:'ผมสีแดงเข้มตัดสั้น ตาสีเทา ดูเย็นชาและเป็นมืออาชีพเสมอ แต่งชุดกาวแต่ชอบสวมแว่นกันแดดในแล็บโดยไม่มีเหตุผลชัดเจน',
+   history:'อดีตนักเคมีของรัฐบาลรัสเซียที่เคยทำงานในโครงการลับที่เกี่ยวข้องกับสารเคมีต้องห้าม เธอย้ายมาไทยหลังจากโครงการนั้นถูกปิดตัวและเพื่อนร่วมงานทุกคน "หายตัวไป" เธอรู้ดีกว่าใครว่าองค์กรที่มีความลับทำอะไรกับคนที่รู้มากเกินไป ดังนั้นเธอจึงเลือกที่จะอยู่ฝั่งองค์กรดีกว่า',
+   achievement:'พัฒนาสารเคลือบผนังห้อง B-7 ที่ยับยั้งการเปลี่ยนสถานะสสารของ SCP-0013-TH | คิดค้นสูตรสารลบความทรงจำที่ใช้กับ SCP',
+   personality:'เย็นชา ตรงไปตรงมา ไม่เสียเวลากับการพูดคุยที่ไม่จำเป็น แต่จริงๆ แล้วเธอสังเกตทุกคนในแผนกอยู่เสมอ',
+   strong:'ความรู้เคมีขั้นสูง | ไม่มีอารมณ์ในสถานการณ์กดดัน',
+   weak:'ไม่ไว้ใจใครง่ายๆ ทำให้ทำงานร่วมกันยาก',
+   like:'ชา | ความเงียบ | การทดลองที่ให้ผลชัดเจน',
+   dislike:'ความไม่แน่นอน | คนที่อธิบายงานตัวเองไม่ได้',
+   quote:'"ผลลัพธ์ไม่โกหก คนต่างหากที่โกหก"',
+   tags:['SCP-TH','Level 3'],
+   alert:null},
+
+  {id:'**6**2**8**5',name:'Lily (ลิลลี่) Suwanna',nick:'นักวิจัยผู้ช่วย',dept:'DEPT-R',role:'นักวิจัยผู้ช่วย',unit:'PROTECT',access:'Level 2',status:'มนุษย์',age:26,gender:'หญิง',nationality:'ไทย',heightNum:160,weightNum:52,height:'160 ซม.',weight:'52 กก.',hot:82,
+   avatar:'LI',avatarBg:'#001a0a',avatarBorder:'#00cc66',
+   scpClass:'PROTECT TIER 2 — ต้องสงสัย TIER 4',scpClassType:'normal',powerLevel:65,powerLabel:'รักษาพิเศษ',
+   currentState:'ทำงานปกติ — ไม่รู้ว่าตัวเองอาจเป็น TIER 4',lockedLike:'ดอกไม้ | แมว',lockedAbility:'รักษาบาดแผลเร็วกว่าปกติอย่างอธิบายไม่ได้',
+   appearance:'ผมดำยาว มักมัดไว้ ตาสีน้ำตาล ยิ้มง่าย แต่งชุดกาว มักพกยาและน้ำติดตัวเสมอ',
+   history:'เข้าองค์กรผ่านสาย PROTECT เพราะมีพลังรักษาที่ยังไม่สามารถอธิบายได้ทางวิทยาศาสตร์ เธอรักษาแผลได้เร็วกว่าปกติมาก ซึ่งองค์กรจัดเธอไว้ที่ TIER 2 แต่บางรายงานภายในระบุว่าเธออาจอยู่ที่ TIER 4 เธอเองไม่รู้เรื่องนี้เลย ทำงานในแผนกวิจัยในฐานะผู้ช่วย แต่ถูกเรียกใช้บ่อยมากในสถานการณ์ฉุกเฉิน',
+   achievement:'รักษา Dr. Purple หลังจากเหตุการณ์ EP8 ได้สำเร็จ | บันทึกพฤติกรรมของ SCP-0013-TH ได้ละเอียดที่สุดในแผนก',
+   personality:'อบอุ่น ใจดี ดูแลคนอื่นก่อนตัวเองเสมอ แต่เมื่อถึงเวลาต้องตัดสินใจ เธอตัดสินใจเด็ดขาดมาก',
+   strong:'พลังรักษา | ความใส่ใจรายละเอียด',
+   weak:'เสียใจง่ายเมื่อคนที่เธอรักษาไม่รอด',
+   like:'ดอกไม้ | เพลงช้า | แมว',
+   dislike:'ความรุนแรงที่ไม่จำเป็น',
+   quote:'"ทุกคนรอดได้ ถ้าได้รับการดูแลที่ดีพอ"',
+   tags:['PROTECT TIER 2','Level 2'],
+   alert:null},
+
+  {id:'**9**4**3**6',name:'Mia (เมีย) Rattana',nick:'นักวิจัยผู้ช่วย',dept:'DEPT-R',role:'นักวิจัยผู้ช่วย',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:27,gender:'หญิง',nationality:'ไทย',heightNum:163,weightNum:54,height:'163 ซม.',weight:'54 กก.',hot:79,
+   avatar:'MI',avatarBg:'#0e0020',avatarBorder:'#aa44ff',
+   scpClass:'บุคลากร GB SCP-TH',scpClassType:'normal',powerLevel:28,powerLabel:'วิเคราะห์ข้อมูล',
+   currentState:'มีข้อมูลลับเกี่ยวกับ Dr. Purple',lockedLike:'กาแฟ | ความชัดเจน',lockedAbility:'จับโกหกได้ไม่แพ้นักจิตวิทยา',
+   appearance:'ผมสั้นสีดำ ตาสีน้ำตาล มักดูเครียดและรีบอยู่เสมอ มีนาฬิกาที่เธอมองบ่อยมากผิดปกติ',
+   history:'ส่งมาจาก GB SCP-TH เช่นเดียวกับ Noah แต่ต่างกันที่เธอไม่ได้แกล้งทำเป็นว่ามาช่วยงาน เธอพูดตรงๆ ว่าเธอมาเพื่อ "ติดตามความคืบหน้า" ซึ่งทำให้ความสัมพันธ์กับคนในแผนกตึงเครียด แต่ความตรงไปตรงมาของเธอกลับทำให้ Dr. Purple เชื่อใจเธอมากกว่า Noah เสียอีก เธอมีข้อมูลบางอย่างเกี่ยวกับอดีตของ Dr. Purple ที่เธอยังไม่ได้เปิดเผย',
+   achievement:'ค้นพบความผิดปกติในรายงานการทดลองที่ถูกส่งไปสาขาอเมริกา | มีข้อมูลลับเกี่ยวกับ Dr. Purple ที่ยังไม่เปิดเผย',
+   personality:'ตรงไปตรงมาจนบางครั้งดูหยาบคาย แต่ไม่เคยโกหก',
+   strong:'วิเคราะห์ข้อมูลเร็ว | ไม่กลัวพูดความจริง',
+   weak:'ทำให้คนอื่นรู้สึกอึดอัดโดยไม่ตั้งใจ',
+   like:'กาแฟ | ความชัดเจน',
+   dislike:'การพูดอ้อมค้อม',
+   quote:'"ถ้าจะโกหก ทำไมไม่พูดตรงๆ ว่าไม่อยากบอก?"',
+   tags:['GB SCP-TH','Level 2'],
+   alert:null},
+
+  {id:'**1**5**7**4',name:'Claire (แคลร์) Narumon',nick:'เจ้าหน้าที่บันทึก',dept:'DEPT-R',role:'เจ้าหน้าที่บันทึก',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:29,gender:'หญิง',nationality:'ไทย',heightNum:158,weightNum:50,height:'158 ซม.',weight:'50 กก.',hot:71,
+   avatar:'CL',avatarBg:'#0a0a0a',avatarBorder:'#555',
+   scpClass:'บุคลากรทั่วไป',scpClassType:'normal',powerLevel:20,powerLabel:'สังเกตการณ์',
+   currentState:'ซ่อนสมุดบันทึกที่มีข้อมูลสำคัญ',lockedLike:'หนังสือ | ชา',lockedAbility:'จำรายละเอียดได้ทุกอย่างโดยไม่ลืม',
+   appearance:'ผมยาวสีน้ำตาลอ่อน ตาสีน้ำตาล ดูเป็นมิตรและเข้าถึงได้ง่าย มักถือสมุดโน้ตและปากกาอยู่เสมอ',
+   history:'ทำงานในองค์กรมา 4 ปีในฐานะผู้บันทึกการทดลองทั้งหมด เธอรู้ทุกอย่างที่เกิดขึ้นในแผนกวิจัยเพราะเธออยู่ในทุกการประชุมและทุกการทดลอง แต่เธอไม่เคยบอกว่าตัวเองรู้อะไร ความจริงที่น่ากลัวคือ สมุดบันทึกส่วนตัวของเธอมีข้อมูลมากกว่าบันทึกอย่างเป็นทางการมาก — และเธอซ่อนมันไว้ที่ไหนสักที่ในตึก',
+   achievement:'บันทึกการทดลองครบถ้วนทุกครั้งโดยไม่มีช่องว่าง | มีสมุดบันทึกส่วนตัวที่ไม่มีใครเคยได้อ่าน',
+   personality:'เงียบ สังเกต จำรายละเอียดได้แม่นยำมาก ดูธรรมดาจนคนมักมองข้ามเธอ',
+   strong:'ความจำเป็นเลิศ | อยู่ในทุกที่โดยไม่ดึงความสนใจ',
+   weak:'ไม่กล้าพูดสิ่งที่รู้ออกมา',
+   like:'หนังสือ | ชา | ความสงบ',
+   dislike:'ความวุ่นวาย',
+   quote:'"ฉันแค่จดบันทึก"',
+   tags:['SCP-TH','Level 2'],
+   alert:null},
+
+  // DEPT-S
+  {id:'**V**1**C**7',name:'Victor (วิคเตอร์) Chaiwat',nick:'หัวหน้าฝ่ายความปลอดภัย',dept:'DEPT-S',role:'หัวหน้าฝ่ายความปลอดภัย',unit:'N-TH',access:'Level 4',status:'มนุษย์',age:45,gender:'ชาย',nationality:'ไทย',heightNum:183,weightNum:90,height:'183 ซม.',weight:'90 กก.',hot:58,
+   avatar:'VI',avatarBg:'#001a0a',avatarBorder:'#00cc66',
+   scpClass:'N-TH TIER 3',scpClassType:'normal',powerLevel:70,powerLabel:'TIER 3 — ยุทธวิธีพิเศษ',
+   currentState:'หัวหน้าทีมรักษาความปลอดภัย',lockedLike:'กาแฟดำ | ระเบียบ',lockedAbility:'รอดจาก SCP-096 โดยไม่รู้ว่าอย่างไร — ความสามารถที่อาจซ่อนอยู่',
+   appearance:'ร่างกายกำยำ ผมดำตัดสั้นมาก ตาสีน้ำตาลเข้ม หน้าตาดูเข้มงวดตลอดเวลา มีแผลเป็นที่คาง',
+   history:'อดีตทหารพิเศษระดับสูงที่ผ่านสงครามหลายครั้ง ถูกองค์กรรับสมัครหลังจากที่เขารอดจากการเผชิญหน้ากับ SCP-096 โดยบังเอิญ และยังมีชีวิตอยู่ได้ ซึ่งตามทฤษฎีแล้วเป็นไปไม่ได้ เขาไม่เคยพูดถึงเหตุการณ์นั้นเลยแม้แต่ครั้งเดียว เขาเชื่อว่าการทำงานคือหน้าที่ และหน้าที่ต้องเสร็จสมบูรณ์เสมอ ไม่ว่าจะเกิดอะไรขึ้น',
+   achievement:'รอดจาก SCP-096 โดยไม่มีใครรู้ว่าอย่างไร | ไม่เคยล้มเหลวในการกักกัน SCP ในระดับ 3 ขึ้นไป',
+   personality:'เข้มงวด ทำตามกฎเสมอ ไม่มีอารมณ์ในการทำงาน แต่ลึกๆ ห่วงใยบุคลากรในทีมทุกคน',
+   strong:'ยุทธวิธีการรบ | ความสงบในสถานการณ์วิกฤต | TIER 3 N-TH',
+   weak:'ไม่ยืดหยุ่นกับกฎ บางครั้งพลาดจุดสำคัญเพราะยึดติดขั้นตอนเกินไป',
+   like:'กาแฟดำ | การฝึกซ้อม | ความเป็นระเบียบ',
+   dislike:'ความไม่แน่นอน | คนที่ฝ่าฝืนกฎ',
+   quote:'"กฎมีไว้ใช้ ไม่ใช่มีไว้ทำลาย"',
+   tags:['N-TH TIER 3','Level 4'],
+   alert:null},
+
+  {id:'**O**8**W**2',name:'Owen (โอเว่น) Jirawat',nick:'เจ้าหน้าที่ห้องควบคุม',dept:'DEPT-S',role:'เจ้าหน้าที่ห้องควบคุม',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:33,gender:'ชาย',nationality:'ไทย',heightNum:174,weightNum:70,height:'174 ซม.',weight:'70 กก.',hot:64,
+   avatar:'OW',avatarBg:'#0a0000',avatarBorder:'#cc0000',
+   scpClass:'บุคลากรที่ได้รับผลกระทบ',scpClassType:'danger',powerLevel:40,powerLabel:'ปกติ — แต่หลัง EP3 ไม่แน่ใจ',
+   currentState:'ยื่นใบลาออกแล้ว ไม่ถูกอนุมัติ',lockedLike:'ดนตรี (เดิม)',lockedAbility:'เห็นบางอย่างที่ SCP ต้องการให้เห็น',
+   appearance:'ผมดำ ตาสีน้ำตาล ดูปกติทุกอย่าง แต่หลัง EP3 มีรายงานว่าเขาดูซีดและนอนไม่หลับ',
+   history:'เจ้าหน้าที่ห้องควบคุมที่ทำงานเวรดึกมาตลอด 2 ปี เขาเป็นคนแรกที่เห็นว่า SCP-0013-TH หันมองกล้องทุกตัวพร้อมกันในคืน EP3 สิ่งที่เขาเห็นทำให้เขายื่นใบลาออกในวันถัดมา แต่ใบลาออกนั้นไม่เคยถูกอนุมัติ และตอนนี้เขายังคงทำงานอยู่ที่นี่ โดยไม่มีใครรู้ว่าเขาเห็นอะไรอีกในคืนนั้นนอกจากแค่กล้องที่เขาบอก',
+   achievement:'มีบันทึกการสังเกตการณ์ที่ละเอียดที่สุดในห้องควบคุม',
+   personality:'เงียบลงมากหลัง EP3 ดูเหมือนจะรู้บางอย่างที่ไม่กล้าพูด',
+   strong:'สังเกตรายละเอียดเล็กน้อยได้แม่น',
+   weak:'หลัง EP3 สมาธิแย่ลงมาก',
+   like:'ดนตรี | ความเงียบ',
+   dislike:'กล้องวงจรปิด (ตอนนี้)',
+   quote:'"มันไม่ได้มองกล้อง... มันมองผม"',
+   tags:['SCP-TH','Level 3','⚠ เฝ้าระวัง'],
+   alert:'⚠ ยื่นใบลาออกหลัง EP3 — ไม่ถูกอนุมัติ'},
+
+  {id:'**F**3**A**9',name:'Faye (เฟย์) Kanokwan',nick:'เจ้าหน้าที่ประตู',dept:'DEPT-S',role:'เจ้าหน้าที่ประตู',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:28,gender:'หญิง',nationality:'ไทย',heightNum:162,weightNum:56,height:'162 ซม.',weight:'56 กก.',hot:80,
+   avatar:'FA',avatarBg:'#001a0a',avatarBorder:'#00cc66',
+   scpClass:'N-TH TIER 2',scpClassType:'normal',powerLevel:68,powerLabel:'TIER 2 — ต่อสู้มือเปล่า',
+   currentState:'ประจำด่านหน้า — พร้อมรบ',lockedLike:'ยูโด | อาหารทะเล',lockedAbility:'หยุด SCP ด้วยมือเปล่าได้ 4 นาที',
+   appearance:'ผมดำมัดหางม้า ตาสีน้ำตาล ดูแกร่ง สวมชุดเกราะเบาตลอดเวลาที่ปฏิบัติหน้าที่',
+   history:'อดีตนักกีฬายูโดทีมชาติไทยที่สละอาชีพนักกีฬาเพื่อเข้าองค์กรหลังจากได้เห็น SCP บางอย่างในการแข่งขันระดับนานาชาติที่ประเทศญี่ปุ่น เธอรู้ว่าโลกมีอะไรบางอย่างที่คนทั่วไปไม่รู้ และเธอเลือกที่จะอยู่ฝั่งที่รู้ดีกว่า เธอเป็น TIER 2 ของ N-TH และเป็นหนึ่งในไม่กี่คนที่สามารถยื้อเวลากับ SCP ระดับกลางได้ด้วยมือเปล่า',
+   achievement:'หยุด SCP-<span class="redacted">███</span> ได้นาน 4 นาทีด้วยมือเปล่าระหว่างรอทีมเสริม',
+   personality:'ตรงไปตรงมา กล้าหาญ ไม่กลัวอะไรง่ายๆ แต่มีอารมณ์ขันในแบบที่คนไม่คาดถึง',
+   strong:'ต่อสู้มือเปล่า | TIER 2 N-TH',
+   weak:'ไม่ชอบรออยู่เฉยๆ',
+   like:'ยูโด | อาหารทะเล | เพลงเร็ว',
+   dislike:'การรอ | คนที่พูดแต่ไม่ทำ',
+   quote:'"ถ้าหมัดไม่ได้ผล ก็ใช้อีกหมัด"',
+   tags:['N-TH TIER 2','Level 2'],
+   alert:null},
+
+  {id:'**N**6**I**4',name:'Nora (นอร่า) Benchamas',nick:'เจ้าหน้าที่ห้องควบคุม',dept:'DEPT-S',role:'เจ้าหน้าที่ห้องควบคุม',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:31,gender:'หญิง',nationality:'ไทย',heightNum:165,weightNum:57,height:'165 ซม.',weight:'57 กก.',hot:73,
+   avatar:'NR',avatarBg:'#0a0a0a',avatarBorder:'#555',
+   scpClass:'บุคลากรทั่วไป — จุดประสงค์ซ่อน',scpClassType:'normal',powerLevel:30,powerLabel:'สังเกตการณ์ระบบ',
+   currentState:'สืบหาพี่ชายที่หายไป',lockedLike:'รูปถ่าย | ชา',lockedAbility:'จับความผิดปกติของระบบได้ไว',
+   appearance:'ผมสั้นสีดำ ตาสีน้ำตาล ดูสงบและมั่นคงเสมอ',
+   history:'ทำงานเวรกลางวันในห้องควบคุม เธอเป็นคนที่นิ่งที่สุดในทีมและมักรับมือสถานการณ์กดดันได้ดี ความลับที่เธอมีคือเธอเป็นพี่สาวของนักวิจัยคนหนึ่งที่ "ย้ายแผนก" ไปก่อน Dr. Purple จะมาถึง เธอเข้ามาทำงานเพื่อหาความจริงว่าพี่ชายเธอไปอยู่ที่ไหน',
+   achievement:'บันทึกความผิดปกติของระบบสัญญาณ 3 ครั้งก่อนที่ใครจะสังเกตเห็น',
+   personality:'สงบ อดทน แต่มีแรงจูงใจส่วนตัวที่ลึกมาก',
+   strong:'สังเกตความผิดปกติของระบบ',
+   weak:'ความลำเอียงเพราะเรื่องพี่ชาย',
+   like:'รูปถ่าย | ชา',
+   dislike:'การโกหก',
+   quote:'"ระบบทุกอย่างปกติ... หรือนั่นคือสิ่งที่เราอยากให้เป็น?"',
+   tags:['SCP-TH','Level 2','⚠ ซ่อนจุดประสงค์'],
+   alert:'⚠ กำลังสืบหาพี่ชายที่หายตัวไป'},
+
+  // DEPT-M
+  {id:'**FX**9**1**',name:'Dr. Felix (ฟีลิกซ์) Somporn',nick:'จิตแพทย์หลัก',dept:'DEPT-M',role:'จิตแพทย์หลัก',unit:'PROTECT',access:'Level 4',status:'มนุษย์ — ต้องสงสัย',age:48,gender:'ชาย',nationality:'ไทย',heightNum:172,weightNum:75,height:'172 ซม.',weight:'75 กก.',hot:40,
+   avatar:'FX',avatarBg:'#150000',avatarBorder:'#cc0000',
+   scpClass:'ต้องสงสัย — ถูกควบคุม',scpClassType:'danger',powerLevel:0,powerLabel:'ถูกยึดครอง',
+   currentState:'ถูก SCP-0013-TH ควบคุม — ยังทำงานอยู่',lockedLike:'[REDACTED]',lockedAbility:'ทำให้คนอื่นไว้วางใจโดยไม่รู้ตัว',
+   appearance:'ผมดำเริ่มมีเทา ตาสีน้ำตาลเข้ม ดูสงบและน่าเชื่อถือ เสมอ ยิ้มในแบบที่ทำให้คนรู้สึกปลอดภัย',
+   history:'จิตแพทย์ที่ทำงานในองค์กรมา 15 ปี เป็นผู้ประเมินสภาพจิตใจของบุคลากรทุกคนที่สัมผัสกับ SCP ผลการประเมินของเขาผ่านทุกคนเสมอ ไม่เคยมีใครล้มเหลว ซึ่งเป็นเรื่องผิดปกติมากเมื่อพิจารณาว่าสิ่งที่พวกเขาเผชิญคืออะไร Dr. Purple เคยพยายามแจ้งเรื่องนี้แต่ถูกบอกว่า "Dr. Felix เป็นมืออาชีพ ไว้วางใจได้" สิ่งที่ไม่มีใครรู้คือตั้งแต่เมื่อ 6 เดือนที่แล้ว ดวงตาของเขาเปลี่ยนไปบางอย่างที่อธิบายไม่ได้',
+   achievement:'ประเมินบุคลากรผ่านทุกคนมา 15 ปี (ซึ่งตอนนี้กลายเป็นหลักฐานที่น่าสงสัย)',
+   personality:'อบอุ่น เข้าใจ น่าเชื่อถือ — ทุกอย่างที่ SCP ต้องการให้เขาแสดงออกมา',
+   strong:'ทำให้คนไว้วางใจ | เข้าถึงข้อมูลส่วนตัวของบุคลากรทุกคน',
+   weak:'ความจริงที่ว่าเขาไม่ได้ควบคุมตัวเองอีกต่อไป',
+   like:'<span class="redacted">████████</span>',
+   dislike:'<span class="redacted">████████</span>',
+   quote:'"คุณสบายดี ทุกอย่างปกติ"',
+   tags:['PROTECT','Level 4','⚠ ต้องสงสัย'],
+   alert:'⚠ สงสัยว่าถูก SCP-0013-TH ควบคุม — ห้ามรับการประเมินจากบุคคลนี้'},
+
+  {id:'**EL**4**7**',name:'Dr. Elena (อีเลน่า) Warisa',nick:'แพทย์ประจำ',dept:'DEPT-M',role:'แพทย์ประจำ',unit:'PROTECT',access:'Level 3',status:'มนุษย์',age:35,gender:'หญิง',nationality:'ไทย-ฝรั่งเศส',heightNum:167,weightNum:58,height:'167 ซม.',weight:'58 กก.',hot:77,
+   avatar:'EL',avatarBg:'#001a0a',avatarBorder:'#00cc66',
+   scpClass:'PROTECT TIER 3',scpClassType:'normal',powerLevel:72,powerLabel:'รักษาฉุกเฉินระดับสูง',
+   currentState:'แพทย์หลักที่ไว้ใจได้',lockedLike:'ไวน์แดง | คลาสสิก',lockedAbility:'รักษาบาดแผลที่ไม่ควรรักษาได้',
+   appearance:'ผมสีน้ำตาลอ่อนยาวไหล่ ตาสีเขียว สวมเสื้อกาวน์ขาวทับชุดกาว ดูเป็นมืออาชีพและอบอุ่น',
+   history:'แพทย์ที่จบจากมหาวิทยาลัยชั้นนำในฝรั่งเศสแล้วกลับมาทำงานในไทย เธอเข้าองค์กรเพราะต้องการรักษาคนที่ "ระบบสาธารณสุขปกติรักษาไม่ได้" ซึ่งก็คือผู้ที่ได้รับผลกระทบจาก SCP เธอเป็นคนเดียวในแผนก M ที่ Dr. Purple เชื่อใจเต็มที่ เพราะเธอเป็นคนที่บอกเขาว่า Dr. Felix มีบางอย่างที่ผิดปกติตั้งแต่เนิ่นๆ',
+   achievement:'รักษาผู้บาดเจ็บจากเหตุการณ์หลุดของ SCP-<span class="redacted">███</span> ได้ทั้งหมด | เป็นคนแรกที่สังเกตเห็นความผิดปกติใน Dr. Felix',
+   personality:'เข้มแข็ง ตรงไปตรงมา ดูแลคนไข้ด้วยหัวใจ แต่ก็ใช้เหตุผลในการตัดสินใจเสมอ',
+   strong:'ทักษะการแพทย์ฉุกเฉิน | PROTECT TIER 3',
+   weak:'ทำงานหนักเกินไปจนร่างกายบางครั้งรับไม่ไหว',
+   like:'ไวน์แดง | การอ่าน | ดนตรีคลาสสิก',
+   dislike:'การสูญเสียคนไข้',
+   quote:'"ฉันมาที่นี่เพื่อช่วยคน ไม่ใช่เพื่อศึกษามัน"',
+   tags:['PROTECT TIER 3','Level 3'],
+   alert:null},
+
+  {id:'**ST**6**2**',name:'Stella (สเตลล่า) Namfon',nick:'เภสัชกร',dept:'DEPT-M',role:'เภสัชกร / เจ้าหน้าที่ห้องยา',unit:'PROTECT',access:'Level 3',status:'มนุษย์',age:32,gender:'หญิง',nationality:'ไทย',heightNum:161,weightNum:53,height:'161 ซม.',weight:'53 กก.',hot:69,
+   avatar:'ST',avatarBg:'#1a1200',avatarBorder:'#ffaa00',
+   scpClass:'PROTECT TIER 1',scpClassType:'normal',powerLevel:42,powerLabel:'เภสัชกรรมพิเศษ',
+   currentState:'รู้ระบบพัง — ยังลังเลจะรายงาน',lockedLike:'ความเป็นระเบียบ | ชา',lockedAbility:'สังเคราะห์ยาที่ซับซ้อนได้',
+   appearance:'ผมดำยาว มักมัดเป็นมวย ตาสีน้ำตาล สวมแว่นกลม ดูสงบและเป็นระเบียบ',
+   history:'รับผิดชอบสารลบความทรงจำที่ใช้กับ SCP-0013-TH โดยตรง เธอเป็นคนที่รู้ว่าระบบฉีดสารพังตั้งแต่แรก แต่รายงานไปแล้วและถูกบอกว่า "จะแก้ไข" ซึ่งไม่มีวันเกิดขึ้น เธอเริ่มเก็บบันทึกส่วนตัวเกี่ยวกับเรื่องนี้ และกำลังพิจารณาว่าจะบอก Dr. Purple หรือไม่',
+   achievement:'พัฒนาสูตรสารลบความทรงจำที่มีประสิทธิภาพสูงขึ้น 40% | รู้ว่าระบบพังแต่ถูกปิดปาก',
+   personality:'รอบคอบ ละเอียด มีจริยธรรมสูง กำลังต่อสู้กับความขัดแย้งภายใน',
+   strong:'ความรู้เภสัชวิทยาขั้นสูง | ซื่อสัตย์',
+   weak:'กลัวผลที่ตามมาถ้าพูดความจริง',
+   like:'ความเป็นระเบียบ | ชา | หนังสือวิทยาศาสตร์',
+   dislike:'การโกหกเพื่อผลประโยชน์',
+   quote:'"ยาทุกชนิดมีผลข้างเคียง ความเงียบก็เช่นกัน"',
+   tags:['PROTECT TIER 1','Level 3','⚠ มีข้อมูลสำคัญ'],
+   alert:'⚠ ทราบว่าระบบฉีดสารพัง — กำลังพิจารณาจะรายงาน'},
+
+  // DEPT-E
+  {id:'**RY**5**8**',name:'Ryan (ไรอัน) Worachat',nick:'หัวหน้าวิศวกร',dept:'DEPT-E',role:'หัวหน้าวิศวกร',unit:'GB SCP-TH',access:'Level 4',status:'มนุษย์',age:42,gender:'ชาย',nationality:'ไทย-ออสเตรเลีย',heightNum:180,weightNum:82,height:'180 ซม.',weight:'82 กก.',hot:55,
+   avatar:'RY',avatarBg:'#0e0020',avatarBorder:'#aa44ff',
+   scpClass:'วิศวกร GB SCP-TH',scpClassType:'normal',powerLevel:50,powerLabel:'ความรู้วิศวกรรม',
+   currentState:'ถูกกดดันจากสองฝ่าย — ยังไม่เลือกข้าง',lockedLike:'กาแฟ | ร็อค',lockedAbility:'ออกแบบระบบกักกันทั้งหมด',
+   appearance:'ผมน้ำตาลอ่อนเริ่มหงอก ตาสีฟ้าอ่อน มักสวมแว่นนิรภัยไว้บนหัวแม้ไม่ได้ใช้ มีน้ำมันเครื่องติดมือเสมอ',
+   history:'วิศวกรที่ออกแบบระบบกักกันห้อง B-7 ทั้งหมดด้วยตัวเอง เขารู้ดีกว่าใครว่าระบบนั้นมีจุดอ่อนตรงไหน และเขาก็รู้ว่ามันไม่เพียงพอสำหรับ SCP-0013-TH มาตั้งแต่ต้น แต่ไม่มีงบประมาณสร้างที่ดีกว่านี้ เขาสังกัด GB SCP-TH และได้รับแรงกดดันจากพวกเขาให้ "ออกแบบระบบที่สามารถควบคุม SCP ได้แต่ไม่ทำลาย" ซึ่งทำให้เขารู้ว่า GB มีแผนอะไรบางอย่าง',
+   achievement:'ออกแบบห้อง B-7 ทั้งระบบ | รู้จุดอ่อนของระบบทุกจุดแต่ไม่มีงบแก้ไข',
+   personality:'ใจเย็น แก้ปัญหาเก่ง ทำงานเป็นจริงเป็นจัง แต่กังวลเรื่องจริยธรรมมากขึ้นเรื่อยๆ',
+   strong:'วิศวกรรมระบบกักกัน | คิดนอกกรอบ',
+   weak:'ถูกกดดันจากสองฝ่าย',
+   like:'กาแฟ | ดนตรีร็อค | แก้ปัญหาซับซ้อน',
+   dislike:'งบประมาณที่ไม่พอ',
+   quote:'"ระบบที่ดีที่สุดคือระบบที่ไม่ต้องใช้"',
+   tags:['GB SCP-TH','Level 4'],
+   alert:null},
+
+  {id:'**FN**2**6**',name:'Finn (ฟินน์) Akkarawit',nick:'วิศวกรระบบกักกัน',dept:'DEPT-E',role:'วิศวกรระบบกักกัน',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:30,gender:'ชาย',nationality:'ไทย',heightNum:171,weightNum:68,height:'171 ซม.',weight:'68 กก.',hot:66,
+   avatar:'??',avatarBg:'#150000',avatarBorder:'#cc0000',
+   scpClass:'หายตัวไป',scpClassType:'danger',powerLevel:0,powerLabel:'ไม่ทราบ',
+   currentState:'หายตัวไปหลังรู้ความจริง',lockedLike:'[ไม่มีข้อมูล]',lockedAbility:'[ไม่มีข้อมูล]',
+   appearance:'ผมดำ ตาสีน้ำตาล ดูปกติทุกอย่าง แต่ปัจจุบันมีรายงานว่าหายตัวไปแล้ว',
+   history:'วิศวกรที่รับผิดชอบตรวจสอบระบบฉีดสารลบความทรงจำโดยตรง เขาพบว่าระบบพังมาหลายสัปดาห์และรายงานต่อหัวหน้าแผนก Ryan แต่ถูกสั่งให้ปิดปาก เขาไม่ยอมและพยายามรายงานโดยตรงต่อหัวหน้าสาขา ในสัปดาห์ถัดมาเขาหายตัวไปโดยมีบันทึกในระบบว่า "ย้ายแผนก" แต่ไม่มีใครรู้ว่าไปอยู่ที่ไหน',
+   achievement:'ค้นพบว่าระบบฉีดสารพัง — แต่ถูกปิดปากก่อนรายงานได้',
+   personality:'ซื่อสัตย์และตรงไปตรงมาจนเป็นอันตรายต่อตัวเอง',
+   strong:'ตรวจสอบระบบได้ละเอียดมาก',
+   weak:'ไม่รู้จักประเมินอันตรายจากการพูดความจริง',
+   like:'<span class="redacted">ไม่มีข้อมูล</span>',
+   dislike:'<span class="redacted">ไม่มีข้อมูล</span>',
+   quote:'"ผมแค่อยากรายงานสิ่งที่พบ"',
+   tags:['SCP-TH','Level 3','⚠ หายตัวไป'],
+   alert:'⚠ สถานะ: หายตัวไป — บันทึกว่า "ย้ายแผนก" แต่ไม่มีปลายทาง'},
+
+  // DEPT-I
+  {id:'**AD**7**3**',name:'Adrian (เอเดรียน) Somsak',nick:'หัวหน้าแผนกข้อมูล',dept:'DEPT-I',role:'หัวหน้าแผนกข้อมูล',unit:'GB SCP-TH',access:'Level 4',status:'มนุษย์',age:50,gender:'ชาย',nationality:'ไทย',heightNum:168,weightNum:72,height:'168 ซม.',weight:'72 กก.',hot:35,
+   avatar:'AD',avatarBg:'#0e0020',avatarBorder:'#aa44ff',
+   scpClass:'GB SCP-TH — ผู้ปิดข้อมูล',scpClassType:'danger',powerLevel:45,powerLabel:'บริหารข้อมูล',
+   currentState:'ปกปิดการทดลองจริงจากอเมริกา',lockedLike:'หมากรุก | วิสกี้',lockedAbility:'ปิดบังข้อมูลโดยไม่ทิ้งร่องรอย',
+   appearance:'ผมดำตัดเรียบร้อย เริ่มมีเทา ตาสีน้ำตาลเข้ม ดูเป็นนักบริหารมากกว่านักวิทยาศาสตร์ สวมสูทเสมอในตึกที่ทุกคนใส่ชุดกาว',
+   history:'คนที่ตัดสินใจว่าข้อมูลไหนจะถูกส่งให้สาขาอเมริกา เขาคือคนที่รายงานว่าองค์กรทดลอง SCP-0013-TH เพียง 7 ครั้ง ทั้งที่ความจริงคือ 1,373 ครั้ง เขาทำแบบนี้ตามคำสั่งของ GB SCP-TH เพื่อไม่ให้สาขาอเมริกาส่งคนมาแทรกแซง เขารู้ทุกความลับในองค์กรแต่ไม่มีใครรู้ว่าเขารู้อะไรบ้าง',
+   achievement:'ปกปิดข้อมูลการทดลองจริงจากสาขาอเมริกาได้นาน 3 ปี',
+   personality:'สงบ รอบคอบ ไม่เคยพูดมากกว่าที่จำเป็น ทุกคำมีจุดประสงค์',
+   strong:'การจัดการข้อมูลและปกปิดร่องรอย',
+   weak:'ไม่มีใครไว้วางใจเขาจริงๆ',
+   like:'หมากรุก | วิสกี้',
+   dislike:'ความไม่แน่นอน',
+   quote:'"ข้อมูลที่ถูกต้องคือข้อมูลที่เหมาะสมกับเวลา"',
+   tags:['GB SCP-TH','Level 4','⚠ ปิดข้อมูล'],
+   alert:'⚠ รายงานข้อมูลเท็จต่อสาขาอเมริกา'},
+
+  {id:'**QN**1**8**',name:'Quinn (ควินน์) Pavinee',nick:'เจ้าหน้าที่เอกสาร',dept:'DEPT-I',role:'เจ้าหน้าที่เอกสาร',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:26,gender:'หญิง',nationality:'ไทย',heightNum:160,weightNum:51,height:'160 ซม.',weight:'51 กก.',hot:74,
+   avatar:'QN',avatarBg:'#0a0a0a',avatarBorder:'#555',
+   scpClass:'บุคลากร — กำลังสืบสวน',scpClassType:'normal',powerLevel:35,powerLabel:'รวบรวมหลักฐาน',
+   currentState:'รวบรวมหลักฐานความไม่สอดคล้องของรายงาน',lockedLike:'ความเป็นระเบียบ | ชาเย็น',lockedAbility:'จับความไม่สอดคล้องของตัวเลขได้',
+   appearance:'ผมสั้นสีดำ ตาสีน้ำตาล ดูฉลาดและตื่นตัวเสมอ มักถือแฟ้มเอกสารหนามาก',
+   history:'เจ้าหน้าที่เอกสารที่เริ่มสังเกตว่าตัวเลขในรายงานการทดลองไม่ตรงกับจำนวนวัสดุที่ใช้จริง ซึ่งหมายความว่าการทดลองจริงมากกว่าที่บันทึก เธอกำลังรวบรวมหลักฐานอย่างเงียบๆ และยังไม่รู้ว่าจะทำอะไรกับมัน เธอรู้ว่าคนที่รู้มากเกินไปมักหายตัวไป แต่เธอก็ไม่สามารถเมินเฉยต่อสิ่งที่เธอพบได้',
+   achievement:'รวบรวมหลักฐานความไม่สอดคล้องของรายงาน | ยังไม่ถูกสังเกตเห็นโดย Adrian',
+   personality:'ละเอียด ช่างสังเกต กล้าหาญในแบบเงียบๆ',
+   strong:'วิเคราะห์เอกสารและหาความไม่สอดคล้อง',
+   weak:'ยังไม่รู้ว่าควรทำอะไรกับข้อมูลที่มี',
+   like:'ความเป็นระเบียบ | ชาเย็น | เดินตอนเย็น',
+   dislike:'ความไม่ยุติธรรม',
+   quote:'"ตัวเลขไม่โกหก แต่คนเลือกตัวเลขได้"',
+   tags:['SCP-TH','Level 2','⚠ กำลังสืบ'],
+   alert:'⚠ สังเกตเห็นความไม่สอดคล้องในรายงาน — กำลังรวบรวมหลักฐาน'},
+
+  // DEPT-A
+  {id:'**DI**9**5**',name:'Diana (ไดอาน่า) Thipawan',nick:'ผู้อำนวยการสาขา',dept:'DEPT-A',role:'ผู้อำนวยการสาขา SITE-013-TH',unit:'GB SCP-TH',access:'Level 5',status:'มนุษย์',age:52,gender:'หญิง',nationality:'ไทย',heightNum:163,weightNum:60,height:'163 ซม.',weight:'60 กก.',hot:48,
+   avatar:'DI',avatarBg:'#0e0020',avatarBorder:'#aa44ff',
+   scpClass:'GB SCP-TH — ผู้วางแผน',scpClassType:'danger',powerLevel:80,powerLabel:'การบริหารและการควบคุม',
+   currentState:'รู้แผนการทั้งหมด — เป็นส่วนหนึ่งของมัน',lockedLike:'[REDACTED]',lockedAbility:'ควบคุมทุกคนในองค์กรโดยที่พวกเขาไม่รู้',
+   appearance:'ผมดำตัดเรียบร้อย มีเทาเล็กน้อย ตาสีน้ำตาลเข้ม ดูมีอำนาจและเย็นชา แต่งตัวเป็นทางการเสมอ',
+   history:'ผู้อำนวยการสาขาที่รู้ความจริงทั้งหมด เธอคือคนที่อยู่เบื้องหลังการปล่อย SCP-0013-TH ออกมา เธอเชื่อว่า SCP-0013-TH มีพลังที่สามารถนำมาใช้เพื่อ "ทำให้ประเทศไทยมีอำนาจ" โดยไม่ต้องพึ่งสาขาอเมริกาอีกต่อไป เธอทำงานร่วมกับรัฐบาลชุดใหม่ของ GB SCP-TH โดยที่สมาชิกส่วนใหญ่ในองค์กรไม่รู้ ความลับที่เธอไม่รู้คือ SCP-0013-TH รู้แผนของเธอทั้งหมดมานานแล้ว',
+   achievement:'บริหารสาขาไทยมา 10 ปี | ปกปิดความจริงจากสาขาอเมริกาได้ตลอด',
+   personality:'เย็นชา คำนวณทุกอย่าง ไม่มีอารมณ์ในการตัดสินใจ เชื่อว่าจุดหมายสำคัญกว่าวิธีการเสมอ',
+   strong:'การบริหารและการควบคุม | ไม่มีใครรู้ว่าเธอคิดอะไร',
+   weak:'ประเมิน SCP-0013-TH ต่ำเกินไป',
+   like:'<span class="redacted">ไม่มีข้อมูลเปิดเผย</span>',
+   dislike:'<span class="redacted">ไม่มีข้อมูลเปิดเผย</span>',
+   quote:'"ทุกอย่างอยู่ภายใต้การควบคุม"',
+   tags:['GB SCP-TH','Level 5','⚠ ผู้วางแผน'],
+   alert:'⚠ รู้แผนการทั้งหมด — เป็นส่วนหนึ่งของมัน'},
+];
+
+// Remaining staff with shorter profiles
+const STAFF_EXTRA = [
+  {id:'**RX**4**1**',name:'Rex (เร็กซ์) Alongkot',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:29,gender:'ชาย',hot:70,history:'อดีตตำรวจพิเศษที่เข้าองค์กรหลังเจอ SCP ในปฏิบัติการ เป็น TIER 2 ของ N-TH มีทักษะการยิงที่แม่นยำสูง และเป็นที่รู้กันว่าเขาไม่เคยพลาดในระยะ 300 เมตร',tags:['N-TH TIER 2','Level 2'],alert:null},
+  {id:'**CL**6**3**',name:'Cole (โคล) Prawit',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:31,gender:'ชาย',hot:67,history:'อดีตทหารพรานที่เข้าองค์กรผ่านการแนะนำของ Victor เขาเชี่ยวชาญการเคลื่อนที่ในพื้นที่จำกัดและเป็น TIER 2 ที่ดีที่สุดในทีมด้านความคล่องตัว',tags:['N-TH TIER 2','Level 2'],alert:null},
+  {id:'**DN**8**5**',name:'Dean (ดีน) Somchai',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:35,gender:'ชาย',hot:62,history:'เจ้าหน้าที่อาวุโสในทีม เคยเจอ SCP มาหลายตัวและรอดมาได้ทุกครั้ง เชื่อว่าโชคดีกว่าคนอื่น แต่องค์กรกำลังตรวจสอบว่าเขาอาจมีความสามารถพิเศษบางอย่างโดยไม่รู้ตัว',tags:['N-TH TIER 1','Level 2'],alert:null},
+  {id:'**ML**3**7**',name:'Miles (ไมลส์) Ratchanon',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:27,gender:'ชาย',hot:75,history:'สมาชิกทีมที่อายุน้อยที่สุดและสังกัด GB SCP-TH ทำให้บางครั้งเกิดความขัดแย้งกับสมาชิกทีมที่สังกัด SCP-TH เขาเชื่อในแนวทางของ GB ที่ว่า SCP สามารถนำมาใช้ประโยชน์ได้',tags:['GB SCP-TH','Level 2'],alert:null},
+  {id:'**IV**1**4**',name:'Ivan (ไอวาน) Wanchai',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:33,gender:'ชาย',hot:60,history:'เจ้าหน้าที่ที่เงียบที่สุดในทีม แทบไม่เคยพูด แต่ทุกคนรู้ว่าเมื่อ Ivan เคลื่อนไหว หมายความว่าสถานการณ์รุนแรงถึงขีดสุดแล้ว เป็น TIER 3 ของ N-TH',tags:['N-TH TIER 3','Level 2'],alert:null},
+  {id:'**KI**7**2**',name:'Kai (ไค) Natthawut',dept:'DEPT-S',role:'เจ้าหน้าที่ยุทธวิธี',unit:'PROTECT',access:'Level 2',status:'มนุษย์',age:26,gender:'ชาย',hot:78,history:'เจ้าหน้าที่ที่เคยเป็นแพทย์กู้ชีพก่อนเข้าองค์กร สังกัด PROTECT TIER 2 แต่ก็ทำหน้าที่ยุทธวิธีด้วย เป็นคนเดียวในทีมที่รักษาคนระหว่างปฏิบัติการได้',tags:['PROTECT TIER 2','Level 2'],alert:null},
+  {id:'**SN**9**6**',name:'Sean (ฌอน) Pongpat',dept:'DEPT-S',role:'เจ้าหน้าที่ระบบ',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:28,gender:'ชาย',hot:65,history:'ผู้เชี่ยวชาญระบบกล้องวงจรปิด เขาคือคนที่รู้ตำแหน่งกล้องทุกตัวในตึก และสังเกตพบบางอย่างผิดปกติในบันทึกภาพก่อนเหตุการณ์ EP3 แต่ยังไม่รู้จะรายงานกับใคร',tags:['SCP-TH','Level 2'],alert:null},
+  {id:'**HG**5**1**',name:'Hugo (ฮิวโก้) Thanawit',dept:'DEPT-S',role:'เจ้าหน้าที่ระบบ',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:30,gender:'ชาย',hot:58,history:'ทำงานร่วมกับ Sean ในระบบกล้อง แต่สังกัด GB SCP-TH ทำให้มีหน้าที่ส่งบางข้อมูลให้ GB โดยที่ Sean ไม่รู้',tags:['GB SCP-TH','Level 2'],alert:null},
+  {id:'**IR**3**8**',name:'Iris (ไอริส) Kultida',dept:'DEPT-S',role:'เจ้าหน้าที่ห้องควบคุม',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:29,gender:'หญิง',hot:76,history:'ทำงานเวรเช้าในห้องควบคุม เธอเป็นคนที่พบว่า Owen ลาออกแต่ไม่ถูกอนุมัติ และเธอกำลังสงสัยว่าทำไม ความจริงที่เธอไม่รู้คือเธอถูกกำหนดให้เป็น "ผู้สังเกตการณ์สำรอง" ในกรณีที่ Owen ถูกดึงออกจากหน้าที่',tags:['SCP-TH','Level 2'],alert:null},
+  {id:'**JD**2**9**',name:'Jade (เจด) Siriporn',dept:'DEPT-S',role:'เจ้าหน้าที่ประตู',unit:'N-TH',access:'Level 2',status:'มนุษย์',age:27,gender:'หญิง',hot:77,history:'ทำงานเวรดึกที่ประตูหลัก เธอเป็น TIER 1 ของ N-TH และรู้ว่าถ้า SCP-0013-TH หลุดออกมาจริงๆ เธอจะเป็นด่านแรกและด่านสุดท้ายในเวลาเดียวกัน เธอรับรู้ความจริงนี้และยังคงมาทำงานทุกวัน',tags:['N-TH TIER 1','Level 2'],alert:null},
+  // DEPT-M remaining
+  {id:'**CH**4**7**',name:'Chloe (โคลอี้) Panida',dept:'DEPT-M',role:'พยาบาล',unit:'PROTECT',access:'Level 2',status:'มนุษย์',age:25,gender:'หญิง',hot:80,history:'พยาบาลที่อายุน้อยที่สุดในองค์กร เพิ่งจบการศึกษา เธอยังไม่รู้ว่าพลังรักษาของเธอที่ "เร็วกว่าปกตินิดหน่อย" นั้นจริงๆ แล้วอาจเป็น PROTECT TIER 4 ที่หายากที่สุด องค์กรกำลังสังเกตเธออย่างเงียบๆ',tags:['PROTECT TIER 1*','Level 2'],alert:null},
+  {id:'**AV**6**3**',name:'Ava (เอวา) Siranee',dept:'DEPT-M',role:'พยาบาล',unit:'PROTECT',access:'Level 2',status:'มนุษย์',age:34,gender:'หญิง',hot:72,history:'พยาบาลผู้มีประสบการณ์ที่เคยทำงานในพื้นที่สงครามกับ MSF มาก่อน เธอเคยเห็นความตายมามากพอที่จะไม่กลัวอีกต่อไป ซึ่งทำให้เธอเป็นหนึ่งในคนที่สงบที่สุดในสถานการณ์ฉุกเฉิน',tags:['PROTECT TIER 2','Level 2'],alert:null},
+  {id:'**NI**8**5**',name:'Nina (นีน่า) Patchara',dept:'DEPT-M',role:'นักจิตวิทยา',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:36,gender:'หญิง',hot:69,history:'นักจิตวิทยาที่ไม่เชื่อใน Dr. Felix มาตั้งแต่วันแรก เธอพยายามรายงานความผิดปกติของเขาหลายครั้งแต่ถูกเพิกเฉย ปัจจุบันเธอเก็บบันทึกพฤติกรรมของ Dr. Felix เป็นการส่วนตัว',tags:['SCP-TH','Level 3','⚠ สังเกต Dr.Felix'],alert:'⚠ กำลังติดตามพฤติกรรมของ Dr. Felix'},
+  {id:'**ZO**1**4**',name:'Zoe (โซอี้) Kornthip',dept:'DEPT-M',role:'นักจิตวิทยา',unit:'GB SCP-TH',access:'Level 3',status:'มนุษย์',age:33,gender:'หญิง',hot:74,history:'นักจิตวิทยาที่สังกัด GB SCP-TH เธอมีหน้าที่ประเมินว่าบุคลากรคนไหน "มีศักยภาพ" ที่ GB สามารถนำมาใช้ได้ เธอไม่ได้บอกใครเรื่องนี้ รวมถึงผู้ถูกประเมินด้วย',tags:['GB SCP-TH','Level 3'],alert:null},
+  // DEPT-E remaining
+  {id:'**LC**7**2**',name:'Luca (ลูก้า) Pornthep',dept:'DEPT-E',role:'วิศวกรระบบกักกัน',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:32,gender:'ชาย',hot:64,history:'เข้ามารับหน้าที่ต่อจาก Finn ที่หายตัวไป เขารู้ว่า Finn หายไปเพราะรู้อะไรบางอย่าง แต่เขาไม่กล้าสืบต่อ เขาเพียงทำหน้าที่และพยายามไม่รู้มากเกินไป',tags:['SCP-TH','Level 3'],alert:null},
+  {id:'**AX**5**8**',name:'Axel (แอ็กเซล) Thanaphon',dept:'DEPT-E',role:'วิศวกรไฟฟ้า',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:28,gender:'ชาย',hot:66,history:'วิศวกรไฟฟ้าที่รับผิดชอบระบบไฟสำรองทั้งหมด เขาคือคนที่ GB SCP-TH ส่งมาเพื่อให้แน่ใจว่าในวันที่พวกเขาต้องการ ระบบไฟจะ "ขัดข้อง" ในเวลาที่เหมาะสม',tags:['GB SCP-TH','Level 2','⚠ ภารกิจลับ'],alert:'⚠ มีภารกิจลับจาก GB SCP-TH'},
+  {id:'**BL**3**6**',name:'Blake (เบลค) Nattapong',dept:'DEPT-E',role:'เจ้าหน้าที่ IT',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:26,gender:'ชาย',hot:71,history:'แฮกเกอร์อดีตที่ "เลือก" เข้าองค์กรหลังจากที่เขาแฮกเข้าระบบขององค์กรแล้วพบว่ามีบางอย่างที่เขาไม่ควรเห็น ตอนนี้เขาทำงานให้องค์กรแทนที่จะถูก "ลบความทรงจำ" เขาเป็นคนที่รู้ว่าข้อมูลในเซิร์ฟเวอร์มีอะไรซ่อนอยู่บ้าง',tags:['SCP-TH','Level 2'],alert:null},
+  {id:'**CR**9**4**',name:'Cruz (ครูซ) Wiroj',dept:'DEPT-E',role:'เจ้าหน้าที่ IT',unit:'GB SCP-TH',access:'Level 2',status:'มนุษย์',age:29,gender:'ชาย',hot:63,history:'ทำงานร่วมกับ Blake แต่สังกัดคนละฝ่าย เขาและ Blake รู้ว่าพวกเขาสอดส่องซึ่งกันและกัน และพวกเขาก็รู้ว่าอีกฝ่ายรู้ ทำให้ห้องเซิร์ฟเวอร์มีบรรยากาศที่ตึงเครียดแบบเงียบๆ ตลอดเวลา',tags:['GB SCP-TH','Level 2'],alert:null},
+  {id:'**RD**2**7**',name:'Reid (รีด) Surachet',dept:'DEPT-E',role:'ช่างซ่อมบำรุง',unit:'SCP-TH',access:'Level 1',status:'มนุษย์',age:40,gender:'ชาย',hot:45,history:'ช่างซ่อมที่อยู่มานานที่สุดในตึก เขาซ่อมทุกอย่างในตึกมา 12 ปี รู้ทุกมุมของอาคาร รู้ทางลับที่ไม่มีในแปลนอาคาร และรู้ว่ามีห้องบางห้องที่ถูกปิดผนึกโดยไม่มีเหตุผลอธิบายในเอกสาร',tags:['SCP-TH','Level 1'],alert:null},
+  {id:'**TR**6**3**',name:'Troy (ทรอย) Ekachai',dept:'DEPT-E',role:'ช่างซ่อมบำรุง',unit:'SCP-TH',access:'Level 1',status:'มนุษย์',age:35,gender:'ชาย',hot:50,history:'ช่างซ่อมที่เข้ามาทำงานเพราะต้องการเงินและไม่รู้ว่าองค์กรทำอะไร ตอนนี้รู้แล้ว แต่สัญญาที่เซ็นไปทำให้ออกไม่ได้ เขาแค่ทำงานแต่ละวันให้ผ่านไปและหวังว่าจะไม่เจออะไรแปลกๆ',tags:['SCP-TH','Level 1'],alert:null},
+  // DEPT-I remaining
+  {id:'**DO**4**8**',name:'Dorian (โดเรียน) Kittiphat',dept:'DEPT-I',role:'นักวิเคราะห์ข้อมูล',unit:'GB SCP-TH',access:'Level 3',status:'มนุษย์',age:38,gender:'ชาย',hot:52,history:'นักวิเคราะห์ที่รู้ว่าข้อมูลที่เขาวิเคราะห์นั้นถูกกรองมาก่อนแล้ว เขาทำงานให้ดีที่สุดกับข้อมูลที่มี แต่เขามีสัญชาตญาณว่าภาพรวมที่เขาเห็นไม่ใช่ภาพรวมจริง',tags:['GB SCP-TH','Level 3'],alert:null},
+  {id:'**EL**7**1**',name:'Elliot (เอลเลียต) Thanachai',dept:'DEPT-I',role:'เจ้าหน้าที่การสื่อสาร',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:32,gender:'ชาย',hot:61,history:'ดูแลการติดต่อสื่อสารกับสาขาอื่น เขารู้ว่าบางข้อความถูกแก้ไขก่อนส่งออกไป แต่ไม่รู้ว่าใครเป็นคนทำ เขาเก็บสำเนาข้อความต้นฉบับทุกฉบับที่ผ่านมือเขาไว้',tags:['SCP-TH','Level 3'],alert:null},
+  {id:'**WR**5**9**',name:'Wren (เรน) Siripat',dept:'DEPT-I',role:'เจ้าหน้าที่เอกสาร',unit:'SCP-TH',access:'Level 2',status:'มนุษย์',age:24,gender:'หญิง',hot:70,history:'เพิ่งเข้าทำงาน ยังไม่รู้อะไรมาก แต่เธอสังเกตว่า Quinn พี่เลี้ยงของเธอดูเครียดมากผิดปกติ และมักทำอะไรบางอย่างหลังเลิกงาน เธอกำลังสงสัย',tags:['SCP-TH','Level 2'],alert:null},
+  // DEPT-A remaining
+  {id:'**VI**3**6**',name:'Vivian (วิเวียน) Arunee',dept:'DEPT-A',role:'เลขานุการผู้อำนวยการ',unit:'GB SCP-TH',access:'Level 3',status:'มนุษย์',age:38,gender:'หญิง',hot:67,history:'เลขานุการที่รู้ทุกนัดหมายและการประชุมลับของ Diana เธอเป็นคนที่ได้เห็นรายงานทุกฉบับก่อนใคร และเธอรู้มากกว่าที่แสดงออก เธอจงรักภักดีต่อ Diana อย่างสุดหัวใจ ซึ่งทำให้เธออันตรายมาก',tags:['GB SCP-TH','Level 3'],alert:null},
+  {id:'**PT**8**2**',name:'Petra (เพทร่า) Suchada',dept:'DEPT-A',role:'เจ้าหน้าที่งบประมาณ',unit:'SCP-TH',access:'Level 3',status:'มนุษย์',age:44,gender:'หญิง',hot:49,history:'ดูแลงบประมาณขององค์กร เธอรู้ดีว่าเงินส่วนหนึ่งถูก "เบี่ยง" ไปที่โครงการลับของ GB SCP-TH เธอรายงานเรื่องนี้ไปแล้วสองครั้งและถูกเพิกเฉย ตอนนี้เธอกำลังพิจารณาจะทำอะไรกับตัวเลขที่เธอพบ',tags:['SCP-TH','Level 3','⚠ มีหลักฐาน'],alert:'⚠ พบความผิดปกติทางการเงิน — รายงานแล้วถูกเพิกเฉย'},
+  {id:'**ND**1**7**',name:'Nadia (นาเดีย) Oraphan',dept:'DEPT-A',role:'เจ้าหน้าที่ประสานงานรัฐบาล',unit:'GB SCP-TH',access:'Level 3',status:'มนุษย์',age:41,gender:'หญิง',hot:56,history:'ช่องทางการสื่อสารระหว่างองค์กรและรัฐบาลไทย เธอรู้ว่ารัฐบาลดึงเงินจากองค์กร แต่เธอก็เป็นคนที่ทำให้กระบวนการนั้นเกิดขึ้น เธอเชื่อว่ากำลังทำสิ่งที่ถูกต้องสำหรับประเทศ',tags:['GB SCP-TH','Level 3'],alert:null},
+];
+
+const ALL_STAFF = [...STAFF, ...STAFF_EXTRA];
+let isUnlocked = false;
+let secretClickCount = 0;
+let secretTimeout = null;
+let sAttempts = 0;
+
+function secretClick() {
+  secretClickCount++;
+  clearTimeout(secretTimeout);
+  secretTimeout = setTimeout(() => { secretClickCount = 0; }, 800);
+  if (secretClickCount >= 3) {
+    secretClickCount = 0;
+    document.getElementById('secret-panel').classList.toggle('open');
+  }
+}
+
+function closeSecret() {
+  document.getElementById('secret-panel').classList.remove('open');
+}
+
+function sPress(n) {
+  const disp = document.getElementById('secret-display');
+  const msg = document.getElementById('secret-msg');
+  const att = document.getElementById('secret-attempts');
+  disp.textContent = n;
+  if (n === 8) {
+    disp.style.color = 'var(--green)';
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✓ CLASSIFIED ACCESS GRANTED';
+    isUnlocked = true;
+    document.getElementById('secret-body').style.display = 'none';
+    document.getElementById('secret-unlocked-bar').style.display = 'block';
+    // show indicator in topbar
+    const tr = document.getElementById('topbar-status');
+    if(tr) tr.innerHTML = '<span class="topbar-unlocked">⬤ CLASSIFIED ACTIVE</span>';
+    renderGrid();
+  } else {
+    sAttempts++;
+    disp.style.color = 'var(--red-bright)';
+    msg.style.color = 'var(--red-bright)';
+    msg.textContent = '✕ INCORRECT';
+    att.textContent = `ผิด ${sAttempts} ครั้ง`;
+    setTimeout(() => {
+      disp.textContent = '—';
+      disp.style.color = 'var(--white)';
+      msg.textContent = '';
+    }, 1000);
+  }
+}
+
+function revokeAccess() {
+  isUnlocked = false;
+  sAttempts = 0;
+  document.getElementById('secret-body').style.display = 'block';
+  document.getElementById('secret-unlocked-bar').style.display = 'none';
+  document.getElementById('secret-display').textContent = '—';
+  document.getElementById('secret-display').style.color = 'var(--white)';
+  document.getElementById('secret-msg').textContent = '';
+  document.getElementById('secret-attempts').textContent = '';
+  const tr = document.getElementById('topbar-status');
+  if(tr) tr.innerHTML = '<span class="blink">●</span> 47 PERSONNEL ON RECORD';
+  closeSecret();
+  renderGrid();
+}
+
+function getAvatar(p) {
+  const av = p.avatar || '??';
+  const bg = p.avatarBg || '#0a0a0a';
+  const bd = p.avatarBorder || 'var(--border)';
+  return `<div class="avatar" style="background:${bg};border-color:${bd};font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:${bd};letter-spacing:1px">${av}</div>`;
+}
+
+function getClassBadge(p) {
+  if (!p.scpClass) return '';
+  const cls = p.scpClassType === 'special' ? 'class-special' : p.scpClassType === 'danger' ? 'class-danger' : 'class-normal';
+  return `<span class="class-badge ${cls}">${p.scpClass}</span>`;
+}
+
+function getPowerBar(p) {
+  if (p.powerLevel === undefined) return '';
+  const col = p.powerLevel >= 80 ? 'var(--red-bright)' : p.powerLevel >= 50 ? 'var(--amber)' : 'var(--green)';
+  return `<div style="margin-top:6px">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:3px">// ระดับพลัง — ${p.powerLabel||''}</div>
+    <div class="power-bar"><div class="power-fill" style="width:${p.powerLevel}%;background:${col}"></div></div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${col};text-align:right;margin-top:2px">${p.powerLevel}/100</div>
+  </div>`;
+}
+
+function lockedField(val, unlocked) {
+  if (!val) return '-';
+  if (unlocked) return val;
+  return `<span class="locked-field" title="กรอกรหัสผ่านเพื่อดู">████ [LOCKED]</span>`;
+}
+
+
+let currentUnit = 'ALL';
+let currentSearch = '';
+let advFilter = {gender:'',access:'',hmin:'',hmax:'',wmin:'',wmax:'',amin:'',amax:'',hotmin:'',hotmax:''};
+
+function unitBadge(u) {
+  if(!u) return '';
+  const map = {'N-TH':'ub-n','SCP-TH':'ub-scp','GB SCP-TH':'ub-gb','THE KILLER SCP':'ub-killer','PROTECT':'ub-protect'};
+  const cls = map[u] || '';
+  return `<span class="unit-badge ${cls}">${u}</span>`;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('personnel-grid');
+  grid.innerHTML = '';
+  let count = 0;
+  ALL_STAFF.forEach((p,i) => {
+    const deptMatch = currentDept === 'ALL' || p.dept === currentDept;
+    const unitMatch = currentUnit === 'ALL' || (p.unit||'') === currentUnit;
+    const searchMatch = !currentSearch ||
+      (p.name||'').toLowerCase().includes(currentSearch.toLowerCase()) ||
+      (p.role||'').toLowerCase().includes(currentSearch.toLowerCase()) ||
+      (p.dept||'').toLowerCase().includes(currentSearch.toLowerCase());
+    const af = advFilter;
+    const genderMatch = !af.gender || (p.gender||'') === af.gender;
+    const accessMatch = !af.access || (p.access||'') === af.access;
+    const hMatch = (!af.hmin || (p.heightNum||0) >= +af.hmin) && (!af.hmax || (p.heightNum||999) <= +af.hmax);
+    const wMatch = (!af.wmin || (p.weightNum||0) >= +af.wmin) && (!af.wmax || (p.weightNum||999) <= +af.wmax);
+    const aMatch = (!af.amin || (p.age||0) >= +af.amin) && (!af.amax || (p.age||999) <= +af.amax);
+    const hotMatch = (!af.hotmin || (p.hot||0) >= +af.hotmin) && (!af.hotmax || (p.hot||100) <= +af.hotmax);
+    if (!deptMatch||!unitMatch||!searchMatch||!genderMatch||!accessMatch||!hMatch||!wMatch||!aMatch||!hotMatch) return;
+    count++;
+    const isAlert = p.alert;
+    const isMissing = p.alert && p.alert.includes('หายตัวไป');
+    const isControlled = p.alert && p.alert.includes('ควบคุม');
+    const card = document.createElement('div');
+    card.className = `person-card${isMissing?' missing':isControlled?' controlled':''}`;
+    card.onclick = () => openModal(i);
+    const tags = (p.tags||[]).map(t => {
+      let cls = 'ptag-gray';
+      if(t.includes('N-TH')) cls='ptag-b';
+      else if(t.includes('GB')) cls='ptag-p';
+      else if(t.includes('PROTECT')) cls='ptag-a';
+      else if(t.includes('⚠')) cls='ptag-r';
+      else if(t.includes('Level 4')||t.includes('Level 5')) cls='ptag-a';
+      else if(t.includes('SCP-TH')) cls='ptag-g';
+      return `<span class="ptag ${cls}">${t}</span>`;
+    }).join('');
+    const nameParts = p.name.split('(');
+    const nameMain = nameParts[0].trim();
+    const nameSub = nameParts[1] ? '('+nameParts[1] : '';
+    card.innerHTML = `
+      <div class="card-top">
+        ${getAvatar(p)}
+        <div class="card-info">
+          <div class="person-dept">${p.dept} &nbsp;|&nbsp; <span style="color:#444">${p.gender||''}</span></div>
+          <div class="person-name">${nameMain}<br><span style="font-size:10px;color:#888">${nameSub}</span></div>
+          <div class="person-role">${p.role}</div>
+        </div>
+      </div>
+      ${unitBadge(p.unit)}
+      ${p.scpClass ? getClassBadge(p) : ''}
+      <div class="person-tags" style="margin-top:5px">${tags}${isAlert?'<span class="ptag ptag-r">⚠</span>':''}</div>`;
+    grid.appendChild(card);
+  });
+  const rc = document.getElementById('result-count');
+  if(rc) rc.textContent = `// พบ ${count} คน จากทั้งหมด ${ALL_STAFF.length} คน`;
+}
+
+function openModal(idx) {
+  const p = ALL_STAFF[idx];
+  document.getElementById('m-id').textContent = `ID: ${p.id} | ${p.dept} | ${p.unit||''} | ${p.gender||''}`;
+  document.getElementById('m-name').textContent = p.name;
+  document.getElementById('m-role').textContent = p.role;
+  let hotBar = p.hot ? `<div class="info-cell" style="grid-column:span 2">
+    <div class="info-label">// ระดับความฮอต</div>
+    <div class="info-val">${p.hot}/100</div>
+    <div class="hot-bar"><div class="hot-fill" style="width:${p.hot}%"></div></div>
+  </div>` : '';
+  let alertBox = p.alert ? `<div class="modal-warn">⚠ ${p.alert}</div>` : '';
+  document.getElementById('m-body').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+      <div class="modal-avatar" style="background:${p.avatarBg||'#0a0a0a'};border-color:${p.avatarBorder||'var(--border)'};font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;color:${p.avatarBorder||'var(--border)'};letter-spacing:2px">${p.avatar||'??'}</div>
+      <div style="flex:1">
+        ${getClassBadge(p)}
+        ${getPowerBar(p)}
+        ${p.currentState ? `<div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--amber);letter-spacing:2px;margin-top:8px;margin-bottom:2px">// สถานะปัจจุบัน</div><div style="font-size:12px;color:#bbb">${p.currentState}</div>` : ''}
+      </div>
+    </div>
+    <div class="info-grid">
+      ${p.age?`<div class="info-cell"><div class="info-label">// อายุ</div><div class="info-val">${p.age} ปี</div></div>`:''}
+      ${p.gender?`<div class="info-cell"><div class="info-label">// เพศ</div><div class="info-val">${p.gender}</div></div>`:''}
+      ${p.nationality?`<div class="info-cell"><div class="info-label">// สัญชาติ</div><div class="info-val">${p.nationality}</div></div>`:''}
+      ${p.height?`<div class="info-cell"><div class="info-label">// ส่วนสูง</div><div class="info-val">${p.height}</div></div>`:''}
+      ${p.weight?`<div class="info-cell"><div class="info-label">// น้ำหนัก</div><div class="info-val">${p.weight}</div></div>`:''}
+      <div class="info-cell"><div class="info-label">// ระดับการเข้าถึง</div><div class="info-val">${p.access||'-'}</div></div>
+      <div class="info-cell"><div class="info-label">// สถานะ</div><div class="info-val">${p.status||'มนุษย์'}</div></div>
+      <div class="info-cell"><div class="info-label">// สังกัด DEPT</div><div class="info-val">${p.dept}</div></div>
+      <div class="info-cell"><div class="info-label">// สังกัดหน่วย</div><div class="info-val">${unitBadge(p.unit)||'-'}</div></div>
+      ${hotBar}
+    </div>
+    ${alertBox}
+    ${p.appearance?`<div class="section-head">// รูปร่างและการแต่งกาย</div><div class="modal-text">${p.appearance}</div>`:''}
+    <div class="section-head">// ประวัติ</div>
+    <div class="modal-text">${p.history||'-'}</div>
+    ${p.achievement?`<div class="section-head">// ผลงานเด่น</div><div class="modal-text">${p.achievement}</div>`:''}
+    ${p.personality?`<div class="section-head">// นิสัยและบุคลิก</div><div class="modal-text">${p.personality}</div>`:''}
+    ${p.strong?`<div class="section-head">// จุดเด่น</div><div class="modal-text">${p.strong}</div>`:''}
+    ${p.weak?`<div class="section-head">// จุดอ่อน</div><div class="modal-text">${p.weak}</div>`:''}
+    <div class="section-head">// สิ่งที่ชอบ (ปัจจุบัน)</div>
+    <div class="modal-text">${lockedField(p.lockedLike||p.like, isUnlocked)}</div>
+    <div class="section-head">// ความสามารถพิเศษ</div>
+    <div class="modal-text">${lockedField(p.lockedAbility, isUnlocked)}</div>
+    ${p.dislike?`<div class="section-head">// สิ่งที่ไม่ชอบ</div><div class="modal-text">${p.dislike}</div>`:''}
+    ${p.quote?`<div class="section-head">// คำพูดประจำตัว</div><div class="modal-text" style="color:var(--amber);font-style:italic">${p.quote}</div>`:''}
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if(e.target.id==='modal') document.getElementById('modal').classList.remove('open');
+}
+
+function filterDept(dept, btn) {
+  currentDept = dept;
+  document.querySelectorAll('.dept-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function filterUnit(unit, btn) {
+  currentUnit = unit;
+  document.querySelectorAll('#unit-all').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.dept-bar:nth-of-type(2) .dept-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function filterPersonnel(val) {
+  currentSearch = val;
+  renderGrid();
+}
+
+function toggleAdv() {
+  const b = document.getElementById('adv-body');
+  const a = document.getElementById('adv-arrow');
+  b.classList.toggle('open');
+  a.textContent = b.classList.contains('open') ? '▲' : '▼';
+}
+
+function applyAdv() {
+  advFilter = {
+    gender: document.getElementById('f-gender').value,
+    access: document.getElementById('f-access').value,
+    hmin: document.getElementById('f-hmin').value,
+    hmax: document.getElementById('f-hmax').value,
+    wmin: document.getElementById('f-wmin').value,
+    wmax: document.getElementById('f-wmax').value,
+    amin: document.getElementById('f-amin').value,
+    amax: document.getElementById('f-amax').value,
+    hotmin: document.getElementById('f-hotmin').value,
+    hotmax: document.getElementById('f-hotmax').value,
+  };
+  renderGrid();
+}
+
+function resetAdv() {
+  ['f-gender','f-access','f-hmin','f-hmax','f-wmin','f-wmax','f-amin','f-amax','f-hotmin','f-hotmax']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  advFilter = {gender:'',access:'',hmin:'',hmax:'',wmin:'',wmax:'',amin:'',amax:'',hotmin:'',hotmax:''};
+  renderGrid();
+}
+
+function toggleUnit(id) {
+  const el = document.getElementById('detail-'+id);
+  const cards = document.querySelectorAll('.unit-card');
+  const isOpen = el.classList.contains('show');
+  document.querySelectorAll('.unit-detail').forEach(d=>d.classList.remove('show'));
+  cards.forEach(c=>c.classList.remove('active'));
+  if(!isOpen) {
+    el.classList.add('show');
+    event.currentTarget.classList.add('active');
+  }
+}
+
+renderGrid();
+</script>
+</body>
+</html>
